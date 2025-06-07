@@ -228,6 +228,8 @@ class LoginPageState extends State<LoginPage> {
                 backgroundColor: Colors.green,
               ),
             );
+
+            Navigator.pushReplacementNamed(context, '/home');
           }
         },
         style: ElevatedButton.styleFrom(

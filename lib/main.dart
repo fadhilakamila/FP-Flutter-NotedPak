@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
       // Kita akan menggunakan routes untuk navigasi awal
       // Dan halaman utama (NotedPakApp) akan diakses setelah login/register
       initialRoute:
-          '/register', // Atau '/login' jika kamu ingin langsung ke halaman login
+          '/login', // Atau '/login' jika kamu ingin langsung ke halaman login
       routes: {
         '/register': (context) => RegistrationPage(),
         '/login': (context) => LoginPage(),
