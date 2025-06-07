@@ -68,12 +68,12 @@ class NotedPakIconPainter extends CustomPainter {
     final foldSize = size.width * 0.15;
     final docRight = size.width * 0.95;
     final docBottom = size.height * 0.95;
-    
+
     // Fill untuk area lipatan
     paint
       ..style = PaintingStyle.fill
       ..color = blueColor;
-    
+
     final foldPath = Path();
     foldPath.moveTo(docRight - foldSize, docBottom);
     foldPath.lineTo(docRight, docBottom - foldSize);
@@ -84,7 +84,7 @@ class NotedPakIconPainter extends CustomPainter {
       docBottom,
     );
     foldPath.close();
-    
+
     canvas.drawPath(foldPath, paint);
 
     // Garis tepi untuk lipatan
@@ -92,7 +92,7 @@ class NotedPakIconPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth * 0.6
       ..color = blueColor;
-    
+
     final foldLine = Path();
     foldLine.moveTo(docRight - foldSize, docBottom);
     foldLine.lineTo(docRight, docBottom - foldSize);
@@ -136,11 +136,7 @@ class NotedPakHomePage extends StatelessWidget {
                 color: const Color(0xFFE0E0E0),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                Icons.person,
-                color: Colors.grey[600],
-                size: 24,
-              ),
+              child: Icon(Icons.person, color: Colors.grey[600], size: 24),
             ),
           ),
         ],
@@ -153,16 +149,15 @@ class NotedPakHomePage extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // Icon/Logo NotedPak - Dibuat dengan presisi tinggi
+                  // ignore: sized_box_for_whitespace
                   Container(
                     width: 120,
                     height: 120,
-                    child: CustomPaint(
-                      painter: NotedPakIconPainter(),
-                    ),
+                    child: CustomPaint(painter: NotedPakIconPainter()),
                   ),
-                  
+
                   const SizedBox(height: 32),
-                  
+
                   // Text - Font yang lebih tebal
                   Column(
                     children: [
@@ -175,9 +170,9 @@ class NotedPakHomePage extends StatelessWidget {
                           height: 1.2,
                         ),
                       ),
-                      
+
                       const SizedBox(height: 2),
-                      
+
                       Text(
                         'Start creating by pressing the + button below!',
                         style: TextStyle(
@@ -204,6 +199,7 @@ class NotedPakHomePage extends StatelessWidget {
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
+              // ignore: deprecated_member_use
               color: Colors.black.withOpacity(0.15),
               blurRadius: 10,
               offset: const Offset(0, 4),
@@ -218,11 +214,7 @@ class NotedPakHomePage extends StatelessWidget {
               _showAddNoteDialog(context);
             },
             child: const Center(
-              child: Icon(
-                Icons.add,
-                color: Colors.white,
-                size: 28,
-              ),
+              child: Icon(Icons.add, color: Colors.white, size: 28),
             ),
           ),
         ),
@@ -236,7 +228,9 @@ class NotedPakHomePage extends StatelessWidget {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Add New Note'),
-          content: const Text('Feature to add new note will be implemented here.'),
+          content: const Text(
+            'Feature to add new note will be implemented here.',
+          ),
           actions: [
             TextButton(
               onPressed: () {
