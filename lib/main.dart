@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'sign_up_screen.dart';
+// import 'sign_up_screen.dart';
+import 'main_page.dart';
 
 void main() {
   runApp(const MainApp());
@@ -8,12 +9,20 @@ void main() {
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
 
-  @override
+  // @override
+  // Widget build(BuildContext context) {
+  //   return MaterialApp(
+  //     title: 'NotedPak',
+  //     theme: ThemeData(primarySwatch: Colors.blue),
+  //     home: const SignUpScreen(),
+  //     debugShowCheckedModeBanner: false,
+  //   );
+  // }
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'NotedPak',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: const SignUpScreen(),
+      home: const NotedPakApp(),
       debugShowCheckedModeBanner: false,
     );
   }
