@@ -300,7 +300,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     child: ElevatedButton(
                       onPressed: () {
                         Navigator.of(context).pop();
-                        Navigator.pushReplacementNamed(context, '/home');
+                        Navigator.pushReplacementNamed(context, '/login');
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF4285F4),
