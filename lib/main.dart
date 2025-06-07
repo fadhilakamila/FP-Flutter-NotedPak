@@ -1,29 +1,39 @@
+// ignore_for_file: use_key_in_widget_constructors
+
 import 'package:flutter/material.dart';
-// import 'sign_up_screen.dart';
-import 'main_page.dart';
+// Ini mengimpor halaman utama aplikasi setelah login
+import 'main_page.dart'; // Ini dari branch 'homepage'
+
+// Ini mengimpor halaman-halaman untuk autentikasi
+import 'screens/registration_page.dart'; // Dari branch 'main'
+import 'screens/login_page.dart';        // Dari branch 'main'
+import 'screens/recover_password_page.dart'; // Dari branch 'main'
 
 void main() {
-  runApp(const MainApp());
+  runApp(MyApp());
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'NotedPak App', // Menggabungkan title dari kedua branch
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        fontFamily: 'Inter', // Menambahkan font dari branch 'main'
+      ),
+      debugShowCheckedModeBanner: false, // Mempertahankan ini dari branch 'homepage'
 
-  // @override
-  // Widget build(BuildContext context) {
-  //   return MaterialApp(
-  //     title: 'NotedPak',
-  //     theme: ThemeData(primarySwatch: Colors.blue),
-  //     home: const SignUpScreen(),
-  //     debugShowCheckedModeBanner: false,
-  //   );
-  // }
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'NotedPak',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: const NotedPakApp(),
-      debugShowCheckedModeBanner: false,
-    );
-  }
+      // Kita akan menggunakan routes untuk navigasi awal
+      // Dan halaman utama (NotedPakApp) akan diakses setelah login/register
+      initialRoute: '/register', // Atau '/login' jika kamu ingin langsung ke halaman login
+      routes: {
+        '/register': (context) => RegistrationPage(),
+        '/login': (context) => LoginPage(),
+        '/recover': (context) => RecoverPasswordPage(),
+        // Tambahkan rute untuk halaman utama setelah autentikasi
+        '/home': (context) => const NotedPakApp(),
+      },
+    );
+  }
 }
