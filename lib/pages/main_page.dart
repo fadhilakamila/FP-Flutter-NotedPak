@@ -8,6 +8,8 @@ import '../widgets/search_field.dart';
 import '../widgets/view_options.dart';
 import '../widgets/note_grid.dart';
 import '../widgets/note_list.dart';
+import '../widgets/note_fab.dart';
+import '../widgets/message_dialog.dart';
 
 import '../models/note.dart';
 import '../change_notifiers/notes_provider.dart';
@@ -125,7 +127,7 @@ class NotedPakHomePage extends StatelessWidget {
                 child: SearchField(), // Komponen SearchField
               ),
               const SizedBox(height: 10),
-              const ViewOptions(), // Komponen ViewOptions
+              const ViewOptions(),
               Expanded(
                 child: notes.isEmpty
                     ? Center( // Jika catatan kosong, tampilkan logo dan teks "You have no notes yet"
@@ -175,32 +177,10 @@ class NotedPakHomePage extends StatelessWidget {
               ),
             ],
           ),
-          floatingActionButton: Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: const Color(0xFF5B9BD5),
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(15),
-                onTap: () {
-                  _showAddNoteDialog(context);
-                },
-                child: const Center(
-                  child: Icon(Icons.add, color: Colors.white, size: 28),
-                ),
-              ),
-            ),
+          floatingActionButton: NoteFab( // <--- PERUBAHAN PENTING: MENGGANTI KODE LAMA DENGAN NoteFab
+            onPressed: () {
+              _showAddNoteDialog(context); // Memanggil fungsi yang sudah ada
+            },
           ),
         );
       },
