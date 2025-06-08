@@ -1,13 +1,14 @@
-// ignore_for_file: use_key_in_widget_constructors
-
 import 'package:flutter/material.dart';
-// Ini mengimpor halaman utama aplikasi setelah login
-import 'pages/main_page.dart'; // Ini dari branch 'homepage'
+import 'package:provider/provider.dart';
 
-// Ini mengimpor halaman-halaman untuk autentikasi
-import 'pages/registration_page.dart'; // Dari branch 'main'
-import 'pages/login_page.dart'; // Dari branch 'main'
-import 'pages/recover_password_page.dart'; // Dari branch 'main'
+import 'package:noted_pak/pages/main_page.dart';
+import 'package:noted_pak/pages/registration_page.dart';
+import 'package:noted_pak/pages/login_page.dart';
+import 'package:noted_pak/pages/recover_password_page.dart';
+import 'package:noted_pak/pages/edit_page.dart'; // Impor NewOrEditNotePage dari pages/edit_page.dart
+
+import 'package:noted_pak/models/note.dart';
+import 'package:noted_pak/change_notifiers/notes_provider.dart';
 
 void main() {
   runApp(MyApp());
@@ -16,24 +17,49 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final Map<String, dynamic> dummyExistingNote = {
+      'title': 'Ubur-ubur Ikan Lele',
+      'content': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. ..',
+      'tags': ['Life', 'College'],
+      'createdDate': DateTime(2025, 1, 29, 3, 30).toIso8601String(),
+      'lastModifiedDate': DateTime(2025, 8, 10, 10, 30).toIso8601String(),
+    };
+
     return MaterialApp(
-      title: 'NotedPak App', // Menggabungkan title dari kedua branch
+      title: 'NotedPak App',
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        fontFamily: 'Inter', // Menambahkan font dari branch 'main'
+        fontFamily: 'Inter',
       ),
-      debugShowCheckedModeBanner:
-          false, // Mempertahankan ini dari branch 'homepage'
-      // Kita akan menggunakan routes untuk navigasi awal
-      // Dan halaman utama (NotedPakApp) akan diakses setelah login/register
-      initialRoute:
-          '/register', // Atau '/login' jika kamu ingin langsung ke halaman login
+      debugShowCheckedModeBanner: false,
+      
+      initialRoute: '/edit_note_direct',
+
       routes: {
         '/register': (context) => RegistrationPage(),
         '/login': (context) => LoginPage(),
         '/recover': (context) => RecoverPasswordPage(),
-        // Tambahkan rute untuk halaman utama setelah autentikasi
-        '/home': (context) => const NotedPakApp(),
+        
+        '/home': (context) => ChangeNotifierProvider(
+          create: (context) => NotesProvider(),
+          child: const NotedPakHomePage(),
+        ),
+        
+        '/edit_note': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+          return NewOrEditNotePage(
+            existingNote: args?['existingNote'],
+            isReadOnly: args?['isReadOnly'] ?? false,
+          );
+        },
+        
+        '/new_note': (context) {
+          return NewOrEditNotePage();
+        },
+
+        '/edit_note_direct': (context) {
+          return NewOrEditNotePage(existingNote: dummyExistingNote);
+        },
       },
     );
   }
