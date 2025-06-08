@@ -23,10 +23,76 @@ flutter:
   fonts:
     - family: Inter
       fonts:
-        - asset: assets/fonts/Inter-Regular.ttf
-        - asset: assets/fonts/Inter-Medium.ttf
+        - asset: assets/fonts/Inter_24pt-Light.ttf
+          weight: 300 # Light
+        - asset: assets/fonts/Inter_24pt-LightItalic.ttf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/Inter_24pt-Medium.ttf
+          weight: 500 # Medium
+        - asset: assets/fonts/Inter_24pt-MediumItalic.ttf
           weight: 500
-        - asset: assets/fonts/Inter-SemiBold.ttf
+          style: italic
+        - asset: assets/fonts/Inter_24pt-Regular.ttf
+          weight: 400 # Regular
+        - asset: assets/fonts/Inter_24pt-SemiBold.ttf
+          weight: 600 # SemiBold
+        - asset: assets/fonts/Inter_24pt-SemiBoldItalic.ttf
           weight: 600
-        - asset: assets/fonts/Inter-Bold.ttf
+          style: italic
+        - asset: assets/fonts/Inter_24pt-Thin.ttf
+          weight: 100 # Thin
+        - asset: assets/fonts/Inter_24pt-ThinItalic.ttf
+          weight: 100
+          style: italic
+        - asset: assets/fonts/Inter_28pt-Black.ttf
+          weight: 900 # Black
+        - asset: assets/fonts/Inter_28pt-BlackItalic.ttf
+          weight: 900
+          style: italic
+        - asset: assets/fonts/Inter_28pt-Bold.ttf
+          weight: 700 # Bold
+        - asset: assets/fonts/Inter_28pt-BoldItalic.ttf
           weight: 700
+          style: italic
+        - asset: assets/fonts/Inter_28pt-ExtraBold.ttf
+          weight: 800 # ExtraBold
+        - asset: assets/fonts/Inter_28pt-ExtraBoldItalic.ttf
+          weight: 800
+          style: italic
+        - asset: assets/fonts/Inter_28pt-ExtraLight.ttf
+          weight: 200 # ExtraLight
+        - asset: assets/fonts/Inter_28pt-ExtraLightItalic.ttf
+          weight: 200
+          style: italic
+        - asset: assets/fonts/Inter_28pt-Italic.ttf # Ini untuk Inter 28pt Italic non-variable
+          style: italic
+        - asset: assets/fonts/Inter_28pt-Light.ttf
+          weight: 300
+        - asset: assets/fonts/Inter_28pt-LightItalic.ttf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/Inter_28pt-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter_28pt-MediumItalic.ttf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/Inter_28pt-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Inter_28pt-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Inter_28pt-SemiBoldItalic.ttf
+          weight: 600
+          style: italic
+        - asset: assets/fonts/Inter_28pt-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/Inter_28pt-ThinItalic.ttf
+          weight: 100
+          style: italic
+        - asset: assets/fonts/Inter-Italic-VariableFont_opsz,wght.ttf
+          style: italic
+          # Ini adalah font variable. Flutter akan secara otomatis menyesuaikan weight berdasarkan 'wght'
+          # Kamu mungkin tidak perlu menentukan weight secara eksplisit untuk variable font
+        - asset: assets/fonts/Inter-VariableFont_opsz,wght.ttf
+          # Ini adalah font variable. Flutter akan secara otomatis menyesuaikan weight berdasarkan 'wght'
+      
