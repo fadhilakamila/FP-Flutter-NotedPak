@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:noted_pak/widgets/message_dialog.dart'; // <--- TAMBAHKAN IMPORT INI
 
 class RecoverPasswordPage extends StatefulWidget {
   const RecoverPasswordPage({super.key});
@@ -160,59 +161,15 @@ class _RecoverPasswordPageState extends State<RecoverPasswordPage> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.check_circle_outline,
-                  size: 48,
-                  color: Colors.green,
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Email Sent',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Password reset link has been sent to your email address',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop(); // Close dialog
-                      Navigator.of(context).pop(); // Back to login
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4285F4),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: const Text(
-                      'OK',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+        return MessageDialog(
+          title: 'Email Sent',
+          content: 'Password reset link has been sent to your email address.',
+          buttonText: 'OK',
+          buttonColor: const Color(0xFF4285F4),
+          onButtonPressed: () {
+            Navigator.of(context).pop(); // Tutup dialog
+            Navigator.of(context).pop(); // Kembali ke halaman login
+          },
         );
       },
     );

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:noted_pak/widgets/new_tag_dialog.dart';
 import 'package:noted_pak/widgets/note_tag.dart';
-import 'package:noted_pak/widgets/delete_note_alert.dart';
+import 'package:noted_pak/widgets/confirmation_dialog.dart';
 
 // Definisi warna primer dan lainnya yang konsisten dengan LoginPage
 const Color _primaryBlue = Color(0xFF4285F4);
@@ -39,9 +39,18 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
   bool _isStrikethrough = false;
 
   List<String> _allExistingUserTags = [
-    'Personal Routine', 'Life', 'College', 'Work', 'Health',
-    'Finance', 'Travel', 'Ideas', 'Shopping', 'Goals',
-    'Hobby', 'Daily'
+    'Personal Routine',
+    'Life',
+    'College',
+    'Work',
+    'Health',
+    'Finance',
+    'Travel',
+    'Ideas',
+    'Shopping',
+    'Goals',
+    'Hobby',
+    'Daily',
   ];
 
   @override
@@ -99,8 +108,18 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
 
   String _getMonthName(int month) {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return months[month - 1];
   }
@@ -113,7 +132,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
         currentNoteTags: _tags,
       ),
     );
-    
+
     if (newTag != null && newTag.isNotEmpty && !_tags.contains(newTag)) {
       setState(() {
         _tags.add(newTag);
@@ -132,28 +151,64 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
     });
   }
 
-  void _saveNote() {
+  void _saveNote() async {
     final noteData = {
-      'title': _titleController.text.isEmpty ? 'Title here..' : _titleController.text,
+      'title': _titleController.text.isEmpty
+          ? 'Title here..'
+          : _titleController.text,
       'content': _contentController.text,
       'tags': _tags,
       'createdDate': _createdDate?.toIso8601String(),
       'lastModifiedDate': DateTime.now().toIso8601String(),
     };
-    
-    Navigator.pop(context, noteData);
+
+    final bool? confirmed = await showDialog<bool>(
+      // <--- Tampilkan dialog konfirmasi
+      context: context,
+      builder: (BuildContext context) {
+        return const ConfirmationDialog(
+          title: 'Confirm Changes', // Judul dialog konfirmasi
+          content:
+              'Are you sure you want to save these changes?', // Pesan konfirmasi
+          confirmButtonText: 'Save', // Teks tombol konfirmasi
+          cancelButtonText: 'Cancel', // Teks tombol batal
+          confirmButtonColor:
+              _primaryBlue, // Menggunakan warna biru utama untuk simpan
+        );
+      },
+    );
+
+    if (confirmed != null && confirmed) {
+      // Logika penyimpanan yang sebenarnya hanya dijalankan jika dikonfirmasi
+      Navigator.pop(
+        context,
+        noteData,
+      ); // Mengembalikan data dan kembali ke halaman sebelumnya
+    }
   }
 
   void _showDeleteConfirmationDialog() {
-    showDialog(
+    showDialog<bool>(
+      // Tambahkan <bool> di sini untuk menunjukkan tipe kembalian
       context: context,
       builder: (BuildContext context) {
-        return const DeleteNoteAlert(); // Pastikan ini const jika tidak ada perubahan state internal
+        // --- GUNAKAN ConfirmationDialog YANG BARU ---
+        return const ConfirmationDialog(
+          title: 'Delete Note',
+          content: 'Are you sure you want to delete this note?',
+          confirmButtonText: 'Delete',
+          confirmButtonColor: Colors.red,
+          cancelButtonText: 'Cancel',
+        );
       },
-    ).then((result) {
-      if (result == true) {
+    ).then((confirmed) {
+      // Variabel hasil diganti jadi 'confirmed'
+      if (confirmed != null && confirmed) {
+        // Pastikan tidak null dan true
         print("Note deleted!");
-        Navigator.pop(context); // Kembali dari NewOrEditNotePage setelah menghapus
+        Navigator.pop(
+          context,
+        ); // Kembali dari NewOrEditNotePage setelah menghapus
       }
     });
   }
@@ -175,9 +230,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          isNewNote
-              ? 'New Note'
-              : (_isEditingMode ? 'Edit Note' : 'View Note'),
+          isNewNote ? 'New Note' : (_isEditingMode ? 'Edit Note' : 'View Note'),
           style: const TextStyle(
             color: _primaryBlue,
             fontSize: 18,
@@ -185,12 +238,16 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
           ),
         ),
         actions: [
-          if (!isNewNote && !_isEditingMode && !widget.isReadOnly) // Hanya tampilkan Edit jika bukan catatan baru, dalam mode view, dan tidak read-only keras
+          if (!isNewNote &&
+              !_isEditingMode &&
+              !widget
+                  .isReadOnly) // Hanya tampilkan Edit jika bukan catatan baru, dalam mode view, dan tidak read-only keras
             TextButton(
               onPressed: () {
                 setState(() {
                   _isEditingMode = true; // Beralih ke mode edit
-                  _lastModifiedDate = DateTime.now(); // Update last modified saat mulai edit
+                  _lastModifiedDate =
+                      DateTime.now(); // Update last modified saat mulai edit
                 });
               },
               child: const Text(
@@ -202,8 +259,10 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                 ),
               ),
             ),
-          
-          if (_isEditingMode && !widget.isReadOnly) // Tampilkan Done dan Delete jika dalam mode edit dan tidak read-only keras
+
+          if (_isEditingMode &&
+              !widget
+                  .isReadOnly) // Tampilkan Done dan Delete jika dalam mode edit dan tidak read-only keras
             TextButton(
               onPressed: _saveNote,
               child: const Text(
@@ -215,8 +274,11 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                 ),
               ),
             ),
-          
-          if (!isNewNote && _isEditingMode && !widget.isReadOnly) // Tampilkan menu titik tiga untuk delete hanya jika editing catatan lama dan tidak read-only keras
+
+          if (!isNewNote &&
+              _isEditingMode &&
+              !widget
+                  .isReadOnly) // Tampilkan menu titik tiga untuk delete hanya jika editing catatan lama dan tidak read-only keras
             PopupMenuButton<String>(
               onSelected: (value) {
                 if (value == 'delete') {
@@ -250,7 +312,8 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
               children: [
                 TextField(
                   controller: _titleController,
-                  readOnly: _isInputReadOnly, // readOnly berdasarkan _isInputReadOnly
+                  readOnly:
+                      _isInputReadOnly, // readOnly berdasarkan _isInputReadOnly
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -266,34 +329,29 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                     border: InputBorder.none,
                   ),
                   onChanged: (value) {
-                    if (_isEditingMode) { // Hanya update jika dalam mode edit
+                    if (_isEditingMode) {
+                      // Hanya update jika dalam mode edit
                       setState(() {
                         _lastModifiedDate = DateTime.now();
                       });
                     }
                   },
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Info Created & Last Modified hanya tampil jika ini catatan yang sudah ada
                 if (!isNewNote) ...[
                   Row(
                     children: [
                       Text(
                         'Created',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
                       const Spacer(),
                       Text(
                         _formatDate(_createdDate!),
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
                     ],
                   ),
@@ -302,90 +360,92 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                     children: [
                       Text(
                         'Last modified',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
                       const Spacer(),
                       Text(
                         _formatDate(_lastModifiedDate!),
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
                 ],
-                
+
                 // Tags Section
                 Row(
                   children: [
                     Text(
                       'Tags',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
                     ),
                     const SizedBox(width: 8),
-                    if (_isEditingMode && !widget.isReadOnly) // Tombol Add Tag hanya di mode edit
+                    if (_isEditingMode &&
+                        !widget.isReadOnly) // Tombol Add Tag hanya di mode edit
                       ElevatedButton(
                         onPressed: _addTag,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _primaryBlue,
                           foregroundColor: Colors.white,
                           minimumSize: Size.zero,
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           elevation: 0,
                         ),
                         child: const Icon(Icons.add, size: 16),
                       ),
                     const Spacer(),
-                    if (_tags.isEmpty && _isInputReadOnly) // "No tags added" hanya di view mode
+                    if (_tags.isEmpty &&
+                        _isInputReadOnly) // "No tags added" hanya di view mode
                       Text(
                         'No tags added',
-                        style: TextStyle(
-                          color: Colors.grey[500],
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: Colors.grey[500], fontSize: 14),
                       ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 12),
-                
+
                 // Tags Display
                 if (_tags.isNotEmpty)
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: _tags.map((tag) => DotTag(
-                      tag: tag,
-                      child: (_isEditingMode && !widget.isReadOnly) // Tombol silang hanya di mode edit
-                          ? GestureDetector(
-                              onTap: () => _removeTag(tag),
-                              child: Container(
-                                padding: const EdgeInsets.only(left: 6),
-                                child: const Icon(
-                                  Icons.close,
-                                  size: 14,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            )
-                          : null, // Tidak ada tombol silang di mode view
-                    )).toList(),
+                    children: _tags
+                        .map(
+                          (tag) => DotTag(
+                            tag: tag,
+                            child:
+                                (_isEditingMode &&
+                                    !widget
+                                        .isReadOnly) // Tombol silang hanya di mode edit
+                                ? GestureDetector(
+                                    onTap: () => _removeTag(tag),
+                                    child: Container(
+                                      padding: const EdgeInsets.only(left: 6),
+                                      child: const Icon(
+                                        Icons.close,
+                                        size: 14,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                : null, // Tidak ada tombol silang di mode view
+                          ),
+                        )
+                        .toList(),
                   ),
               ],
             ),
           ),
-          
+
           const Divider(height: 1),
-          
+
           // Content Editor
           Expanded(
             child: Container(
@@ -397,14 +457,19 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                       padding: const EdgeInsets.all(16.0),
                       child: TextField(
                         controller: _contentController,
-                        readOnly: _isInputReadOnly, // readOnly berdasarkan _isInputReadOnly
+                        readOnly:
+                            _isInputReadOnly, // readOnly berdasarkan _isInputReadOnly
                         maxLines: null,
                         expands: true,
                         textAlignVertical: TextAlignVertical.top,
                         style: TextStyle(
                           fontSize: 16,
-                          fontWeight: _isBold ? FontWeight.bold : FontWeight.normal,
-                          fontStyle: _isItalic ? FontStyle.italic : FontStyle.normal,
+                          fontWeight: _isBold
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                          fontStyle: _isItalic
+                              ? FontStyle.italic
+                              : FontStyle.normal,
                           decoration: TextDecoration.combine([
                             if (_isUnderline) TextDecoration.underline,
                             if (_isStrikethrough) TextDecoration.lineThrough,
@@ -419,7 +484,8 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                           border: InputBorder.none,
                         ),
                         onChanged: (value) {
-                          if (_isEditingMode) { // Hanya update jika dalam mode edit
+                          if (_isEditingMode) {
+                            // Hanya update jika dalam mode edit
                             setState(() {
                               _lastModifiedDate = DateTime.now();
                             });
@@ -428,11 +494,14 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                       ),
                     ),
                   ),
-                  
+
                   // Rich Text Toolbar hanya tampil di mode edit
                   if (_isEditingMode && !widget.isReadOnly)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         border: Border(
@@ -444,16 +513,20 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                           IconButton(
                             icon: const Icon(Icons.undo),
                             color: Colors.grey[600],
-                            onPressed: () { /* Implement undo functionality */ },
+                            onPressed: () {
+                              /* Implement undo functionality */
+                            },
                           ),
                           IconButton(
                             icon: const Icon(Icons.redo),
                             color: Colors.grey[600],
-                            onPressed: () { /* Implement redo functionality */ },
+                            onPressed: () {
+                              /* Implement redo functionality */
+                            },
                           ),
-                          
+
                           const SizedBox(width: 8),
-                          
+
                           IconButton(
                             icon: const Icon(Icons.format_bold),
                             color: _isBold ? _primaryBlue : Colors.grey[600],
@@ -474,7 +547,9 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                           ),
                           IconButton(
                             icon: const Icon(Icons.format_underlined),
-                            color: _isUnderline ? _primaryBlue : Colors.grey[600],
+                            color: _isUnderline
+                                ? _primaryBlue
+                                : Colors.grey[600],
                             onPressed: () {
                               setState(() {
                                 _isUnderline = !_isUnderline;
@@ -483,20 +558,24 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                           ),
                           IconButton(
                             icon: const Icon(Icons.format_strikethrough),
-                            color: _isStrikethrough ? _primaryBlue : Colors.grey[600],
+                            color: _isStrikethrough
+                                ? _primaryBlue
+                                : Colors.grey[600],
                             onPressed: () {
                               setState(() {
                                 _isStrikethrough = !_isStrikethrough;
                               });
                             },
                           ),
-                          
+
                           const Spacer(),
-                          
+
                           IconButton(
                             icon: const Icon(Icons.format_list_bulleted),
                             color: Colors.grey[600],
-                            onPressed: () { /* Implement bullet list functionality */ },
+                            onPressed: () {
+                              /* Implement bullet list functionality */
+                            },
                           ),
                         ],
                       ),

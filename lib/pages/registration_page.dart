@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'login_page.dart';
+import 'package:noted_pak/widgets/message_dialog.dart'; // <--- TAMBAHKAN IMPORT INI
 
 class RegistrationPage extends StatefulWidget {
   // ignore: use_super_parameters
@@ -155,7 +156,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
       controller: _passwordController,
       obscureText: _isPasswordHidden,
       decoration: InputDecoration(
-        labelText: 'Password', // GANTI dari hintText ke labelText
+        labelText: 'Password',
         floatingLabelBehavior: FloatingLabelBehavior.auto,
         labelStyle: TextStyle(color: Colors.grey[600], fontSize: 16),
         floatingLabelStyle: const TextStyle(
@@ -269,59 +270,14 @@ class _RegistrationPageState extends State<RegistrationPage> {
         context: context,
         barrierDismissible: false,
         builder: (BuildContext context) {
-          return Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.email_outlined,
-                    size: 48,
-                    color: Color(0xFF4285F4),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Verify Email',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'We have sent email verification to your email address',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        Navigator.pushReplacementNamed(context, '/login');
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4285F4),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: const Text(
-                        'OK',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          return MessageDialog(
+            title: 'Verify Email',
+            content: 'We have sent an email verification to your email address.',
+            buttonText: 'OK',
+            buttonColor: const Color(0xFF4285F4),
+            onButtonPressed: () {
+              Navigator.pushReplacementNamed(context, '/login');
+            },
           );
         },
       );
