@@ -168,56 +168,50 @@ class NotedPakHomePage extends StatelessWidget {
           const SizedBox(height: 10),
           const ViewOptions(), // Komponen ViewOptions
           Expanded(
-            child: Consumer<NotesProvider>(
-              builder: (context, notesProvider, child) {
-                if (notesProvider.notes.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Icon/Logo NotedPak - Dibuat dengan presisi tinggi
-                        Container(
-                          width: 120,
-                          height: 120,
-                          child: CustomPaint(painter: NotedPakIconPainter()),
-                        ),
-                        const SizedBox(height: 32),
-                        // Text - Font yang lebih tebal
-                        Column(
-                          children: [
-                            Text(
-                              'You have no notes yet,',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color:
-                                    primary, // Menggunakan warna dari constants
-                                fontWeight: FontWeight.w600,
-                                height: 1.2,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Start creating by pressing the + button below!',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color:
-                                    primary, // Menggunakan warna dari constants
-                                fontWeight: FontWeight.w600,
-                                height: 1.2,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      ],
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Icon/Logo NotedPak - Dibuat dengan presisi tinggi
+                  Container(
+                    width: 120,
+                    height: 120,
+                    child: CustomPaint(
+                      painter: NotedPakIconPainter(),
                     ),
-                  );
-                } else {
-                  return notesProvider.isGrid
-                      ? const NotesGrid() // Tampilkan Grid jika isGrid true
-                      : const NotesList(); // Tampilkan List jika isGrid false
-                }
-              },
+                  ),
+                  
+                  const SizedBox(height: 32),
+                  
+                  // Text - Font yang lebih tebal
+                  Column(
+                    children: [
+                      Text(
+                        'You have no notes yet,',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: const Color(0xFF5B9BD5),
+                          fontWeight: FontWeight.w600,
+                          height: 1.2,
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 2),
+                      
+                      Text(
+                        'Start creating by pressing the + button below!',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: const Color(0xFF5B9BD5),
+                          fontWeight: FontWeight.w600,
+                          height: 1.2,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -230,6 +224,7 @@ class NotedPakHomePage extends StatelessWidget {
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
+              // ignore: deprecated_member_use
               color: Colors.black.withOpacity(0.15),
               blurRadius: 10,
               offset: const Offset(0, 4),
