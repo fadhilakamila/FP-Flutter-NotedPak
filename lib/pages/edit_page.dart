@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:noted_pak/widgets/new_tag_dialog.dart';
-import 'package:noted_pak/widgets/note_tag.dart'; // Di sini ada definisi DotTag dan fungsi getDotTagBackgroundColor
-import 'package:noted_pak/widgets/delete_note_alert.dart'; // Import DeleteNoteAlert
+import 'package:noted_pak/widgets/note_tag.dart';
+import 'package:noted_pak/widgets/delete_note_alert.dart';
 
 // Definisi warna primer dan lainnya yang konsisten dengan LoginPage
 const Color _primaryBlue = Color(0xFF4285F4);
-const Color _lightGreyBackground = Color(0xFFF8F9FA); // Not explicitly used in this snippet, but good to keep
+const Color _lightGreyBackground = Color(0xFFF8F9FA);
 const Color _lightBorderColor = Color(0xFFE9ECEF);
-const Color _darkTextColor = Colors.black87; // Untuk teks judul AppBar, dll.
 
 class NewOrEditNotePage extends StatefulWidget {
   final Map<String, dynamic>? existingNote;
-  final bool isReadOnly;
+  final bool isReadOnly; // Ini adalah override keras untuk mode read-only
 
   const NewOrEditNotePage({
     Key? key,
@@ -26,9 +25,12 @@ class NewOrEditNotePage extends StatefulWidget {
 class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
   late TextEditingController _titleController;
   late TextEditingController _contentController;
-  List<String> _tags = []; // Daftar tag yang dimiliki catatan ini
+  List<String> _tags = [];
   DateTime? _createdDate;
   DateTime? _lastModifiedDate;
+
+  // State untuk mengontrol mode edit/view
+  late bool _isEditingMode;
 
   // Variabel untuk gaya teks Rich Text Editor
   bool _isBold = false;
@@ -36,9 +38,6 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
   bool _isUnderline = false;
   bool _isStrikethrough = false;
 
-  // List ini akan menyimpan semua tag yang pernah dibuat oleh user di aplikasi.
-  // Dalam aplikasi nyata, ini akan diambil dari database atau penyimpanan lokal.
-  // Untuk tujuan demo, ini adalah data dummy.
   List<String> _allExistingUserTags = [
     'Personal Routine', 'Life', 'College', 'Work', 'Health',
     'Finance', 'Travel', 'Ideas', 'Shopping', 'Goals',
@@ -50,6 +49,21 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
     super.initState();
     _initializeControllers();
     _loadExistingNote();
+
+    // Inisialisasi _isEditingMode:
+    // Jika ini catatan baru, langsung masuk mode edit.
+    // Jika catatan yang sudah ada, mulai dalam mode view, kecuali jika isReadOnly widget adalah false.
+    _isEditingMode = widget.existingNote == null && !widget.isReadOnly;
+    // Jika widget.isReadOnly adalah true, maka selalu dalam mode view (tidak bisa diedit)
+    if (widget.isReadOnly) {
+      _isEditingMode = false;
+    } else if (widget.existingNote != null && widget.existingNote!.isEmpty) {
+      // Handle case where existingNote is provided but empty, treat as new note
+      _isEditingMode = true;
+    } else if (widget.existingNote != null) {
+      // For existing notes, start in view mode (unless explicitly forced to edit from external route/param)
+      _isEditingMode = false;
+    }
   }
 
   void _initializeControllers() {
@@ -62,8 +76,6 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
       _titleController.text = widget.existingNote!['title'] ?? '';
       _contentController.text = widget.existingNote!['content'] ?? '';
       _tags = List<String>.from(widget.existingNote!['tags'] ?? []);
-      // Pastikan tanggalnya adalah DateTime object, bukan String.
-      // Jika dari JSON, mungkin perlu parsing.
       _createdDate = _parseDate(widget.existingNote!['createdDate']);
       _lastModifiedDate = _parseDate(widget.existingNote!['lastModifiedDate']);
     } else {
@@ -125,24 +137,21 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
       'title': _titleController.text.isEmpty ? 'Title here..' : _titleController.text,
       'content': _contentController.text,
       'tags': _tags,
-      'createdDate': _createdDate?.toIso8601String(), // Pastikan disimpan sebagai String
-      'lastModifiedDate': DateTime.now().toIso8601String(), // Pastikan disimpan sebagai String
+      'createdDate': _createdDate?.toIso8601String(),
+      'lastModifiedDate': DateTime.now().toIso8601String(),
     };
     
     Navigator.pop(context, noteData);
   }
 
-  // Fungsi untuk menampilkan dialog konfirmasi penghapusan
   void _showDeleteConfirmationDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return DeleteNoteAlert();
+        return const DeleteNoteAlert(); // Pastikan ini const jika tidak ada perubahan state internal
       },
     ).then((result) {
-      if (result == true) { // Jika user menekan 'Yes' di dialog DeleteNoteAlert
-        // Logika untuk menghapus catatan di sini
-        // Misalnya, panggil API atau hapus dari database lokal
+      if (result == true) {
         print("Note deleted!");
         Navigator.pop(context); // Kembali dari NewOrEditNotePage setelah menghapus
       }
@@ -151,8 +160,11 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
 
   @override
   Widget build(BuildContext context) {
-    final isEditing = widget.existingNote != null;
-    
+    // Tentukan apakah catatan ini adalah catatan baru (belum pernah disimpan)
+    final isNewNote = widget.existingNote == null;
+    // Tentukan apakah input field harus read-only (berdasarkan mode atau override isReadOnly)
+    final bool _isInputReadOnly = !_isEditingMode || widget.isReadOnly;
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
@@ -163,7 +175,9 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          isEditing ? 'Edit Note' : 'New Note',
+          isNewNote
+              ? 'New Note'
+              : (_isEditingMode ? 'Edit Note' : 'View Note'),
           style: const TextStyle(
             color: _primaryBlue,
             fontSize: 18,
@@ -171,8 +185,38 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
           ),
         ),
         actions: [
-          // Mengganti IconButton dengan PopupMenuButton untuk opsi delete
-          if (isEditing && !widget.isReadOnly) // Tampilkan tombol delete hanya jika sedang mengedit dan tidak read-only
+          if (!isNewNote && !_isEditingMode && !widget.isReadOnly) // Hanya tampilkan Edit jika bukan catatan baru, dalam mode view, dan tidak read-only keras
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _isEditingMode = true; // Beralih ke mode edit
+                  _lastModifiedDate = DateTime.now(); // Update last modified saat mulai edit
+                });
+              },
+              child: const Text(
+                'Edit',
+                style: TextStyle(
+                  color: _primaryBlue,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          
+          if (_isEditingMode && !widget.isReadOnly) // Tampilkan Done dan Delete jika dalam mode edit dan tidak read-only keras
+            TextButton(
+              onPressed: _saveNote,
+              child: const Text(
+                'Done',
+                style: TextStyle(
+                  color: _primaryBlue,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          
+          if (!isNewNote && _isEditingMode && !widget.isReadOnly) // Tampilkan menu titik tiga untuk delete hanya jika editing catatan lama dan tidak read-only keras
             PopupMenuButton<String>(
               onSelected: (value) {
                 if (value == 'delete') {
@@ -180,35 +224,19 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                 }
               },
               itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                PopupMenuItem<String>(
+                const PopupMenuItem<String>(
                   value: 'delete',
                   child: Row(
-                    children: const [
+                    children: [
                       Icon(Icons.delete_outline, color: Colors.red),
                       SizedBox(width: 8),
                       Text('Delete Note', style: TextStyle(color: Colors.red)),
                     ],
                   ),
                 ),
-                // Anda bisa menambahkan PopupMenuItem lain di sini
               ],
-              icon: const Icon(Icons.more_vert, color: _primaryBlue), // Icon tiga titik
+              icon: const Icon(Icons.more_vert, color: _primaryBlue),
             ),
-          
-          TextButton(
-            onPressed: widget.isReadOnly ? null : _saveNote,
-            child: const Text(
-              'Done',
-              style: TextStyle(
-                color: _primaryBlue,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          // Icon book_outlined dihapus atau dipindahkan jika tidak diperlukan lagi
-          // atau jika fungsionalitasnya dipindah ke menu tiga titik.
-          // Saat ini, saya menghapusnya karena opsi "Delete Note" akan ada di sana.
         ],
       ),
       body: Column(
@@ -222,7 +250,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
               children: [
                 TextField(
                   controller: _titleController,
-                  readOnly: widget.isReadOnly,
+                  readOnly: _isInputReadOnly, // readOnly berdasarkan _isInputReadOnly
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -238,15 +266,18 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                     border: InputBorder.none,
                   ),
                   onChanged: (value) {
-                    setState(() {
-                      _lastModifiedDate = DateTime.now();
-                    });
+                    if (_isEditingMode) { // Hanya update jika dalam mode edit
+                      setState(() {
+                        _lastModifiedDate = DateTime.now();
+                      });
+                    }
                   },
                 ),
                 
                 const SizedBox(height: 16),
                 
-                if (isEditing) ...[
+                // Info Created & Last Modified hanya tampil jika ini catatan yang sudah ada
+                if (!isNewNote) ...[
                   Row(
                     children: [
                       Text(
@@ -300,7 +331,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    if (!widget.isReadOnly)
+                    if (_isEditingMode && !widget.isReadOnly) // Tombol Add Tag hanya di mode edit
                       ElevatedButton(
                         onPressed: _addTag,
                         style: ElevatedButton.styleFrom(
@@ -314,7 +345,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                         child: const Icon(Icons.add, size: 16),
                       ),
                     const Spacer(),
-                    if (_tags.isEmpty)
+                    if (_tags.isEmpty && _isInputReadOnly) // "No tags added" hanya di view mode
                       Text(
                         'No tags added',
                         style: TextStyle(
@@ -327,27 +358,26 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                 
                 const SizedBox(height: 12),
                 
-                // Tags Display - MENGGUNAKAN DOTTAG DENGAN TOMBOL HAPUS SEBAGAI CHILD
+                // Tags Display
                 if (_tags.isNotEmpty)
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: _tags.map((tag) => DotTag( // <-- Menggunakan DotTag di sini!
+                    children: _tags.map((tag) => DotTag(
                       tag: tag,
-                      // Jika tidak read-only, tambahkan tombol silang sebagai child
-                      child: widget.isReadOnly
-                          ? null
-                          : GestureDetector(
+                      child: (_isEditingMode && !widget.isReadOnly) // Tombol silang hanya di mode edit
+                          ? GestureDetector(
                               onTap: () => _removeTag(tag),
                               child: Container(
-                                padding: const EdgeInsets.only(left: 6), // Padding ke kiri untuk ikon silang
+                                padding: const EdgeInsets.only(left: 6),
                                 child: const Icon(
                                   Icons.close,
                                   size: 14,
-                                  color: Colors.white, // Ikon silang tetap putih
+                                  color: Colors.white,
                                 ),
                               ),
-                            ),
+                            )
+                          : null, // Tidak ada tombol silang di mode view
                     )).toList(),
                   ),
               ],
@@ -367,7 +397,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                       padding: const EdgeInsets.all(16.0),
                       child: TextField(
                         controller: _contentController,
-                        readOnly: widget.isReadOnly,
+                        readOnly: _isInputReadOnly, // readOnly berdasarkan _isInputReadOnly
                         maxLines: null,
                         expands: true,
                         textAlignVertical: TextAlignVertical.top,
@@ -389,16 +419,18 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                           border: InputBorder.none,
                         ),
                         onChanged: (value) {
-                          setState(() {
-                            _lastModifiedDate = DateTime.now();
-                          });
+                          if (_isEditingMode) { // Hanya update jika dalam mode edit
+                            setState(() {
+                              _lastModifiedDate = DateTime.now();
+                            });
+                          }
                         },
                       ),
                     ),
                   ),
                   
-                  // Rich Text Toolbar
-                  if (!widget.isReadOnly)
+                  // Rich Text Toolbar hanya tampil di mode edit
+                  if (_isEditingMode && !widget.isReadOnly)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
