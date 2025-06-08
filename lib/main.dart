@@ -2,12 +2,12 @@
 
 import 'package:flutter/material.dart';
 // Ini mengimpor halaman utama aplikasi setelah login
-import 'main_page.dart'; // Ini dari branch 'homepage'
+import 'pages/main_page.dart'; // Ini dari branch 'homepage'
 
 // Ini mengimpor halaman-halaman untuk autentikasi
-import 'screens/registration_page.dart'; // Dari branch 'main'
-import 'screens/login_page.dart'; // Dari branch 'main'
-import 'screens/recover_password_page.dart'; // Dari branch 'main'
+import 'pages/registration_page.dart'; // Dari branch 'main'
+import 'pages/login_page.dart'; // Dari branch 'main'
+import 'pages/recover_password_page.dart'; // Dari branch 'main'
 
 void main() {
   runApp(MyApp());
@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
       // Kita akan menggunakan routes untuk navigasi awal
       // Dan halaman utama (NotedPakApp) akan diakses setelah login/register
       initialRoute:
-          '/login', // Atau '/login' jika kamu ingin langsung ke halaman login
+          '/register', // Atau '/login' jika kamu ingin langsung ke halaman login
       routes: {
         '/register': (context) => RegistrationPage(),
         '/login': (context) => LoginPage(),

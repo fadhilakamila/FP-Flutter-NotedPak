@@ -1,4 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
+// Import komponen-komponen baru (pastikan pathnya benar relatif ke main_page.dart)
+import '../widgets/search_field.dart'; // Uncomment and adjust the path if the file exists
+import '../widgets/view_options.dart';
+import '../widgets/note_grid.dart';
+import '../widgets/note_list.dart'; // Pastikan pathnya benar
+import '../widgets/note_card.dart'; // Perlu diimpor untuk ListView.builder placeholder
+
+import '../models/note.dart';
+import '../change_notifiers/notes_provider.dart';
+import '../core/constants.dart'; // Untuk warna primary, background, dll.
+import '../enums/order_option.dart'; // Untuk OrderOption enum
 
 void main() {
   runApp(const NotedPakApp());
@@ -15,8 +29,12 @@ class NotedPakApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
         scaffoldBackgroundColor: Colors.white,
+        fontFamily: 'Inter',
       ),
-      home: const NotedPakHomePage(),
+      home: ChangeNotifierProvider(
+        create: (context) => NotesProvider(),
+        child: const NotedPakHomePage(),
+      ),
     );
   }
 }
@@ -143,21 +161,28 @@ class NotedPakHomePage extends StatelessWidget {
       ),
       body: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: SearchField(), // Komponen SearchField
+          ),
+          const SizedBox(height: 10),
+          const ViewOptions(), // Komponen ViewOptions
           Expanded(
             child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // Icon/Logo NotedPak - Dibuat dengan presisi tinggi
-                  // ignore: sized_box_for_whitespace
                   Container(
                     width: 120,
                     height: 120,
-                    child: CustomPaint(painter: NotedPakIconPainter()),
+                    child: CustomPaint(
+                      painter: NotedPakIconPainter(),
+                    ),
                   ),
-
+                  
                   const SizedBox(height: 32),
-
+                  
                   // Text - Font yang lebih tebal
                   Column(
                     children: [
@@ -170,9 +195,9 @@ class NotedPakHomePage extends StatelessWidget {
                           height: 1.2,
                         ),
                       ),
-
+                      
                       const SizedBox(height: 2),
-
+                      
                       Text(
                         'Start creating by pressing the + button below!',
                         style: TextStyle(
