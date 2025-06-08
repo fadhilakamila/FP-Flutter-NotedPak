@@ -34,12 +34,12 @@ class _ViewOptionsState extends State<ViewOptions> {
             DropdownButton<OrderOption>(
               value: notesProvider.orderBy,
               icon: Icon(
-                notesProvider.isDescending
+                notesProvider.isDescending // Ikon panah naik/turun berdasarkan state isDescending
                     ? Icons.arrow_downward
                     : Icons.arrow_upward,
                 size: 16,
                 color: Color(0xFF8A8A8A),
-              ), // Ikon panah naik/turun
+              ),
               underline: const SizedBox.shrink(),
               borderRadius: BorderRadius.circular(8),
               isDense: true,
@@ -55,9 +55,20 @@ class _ViewOptionsState extends State<ViewOptions> {
                   )
                   .toList(),
               onChanged: (newValue) {
-                setState(() {
-                  notesProvider.orderBy = newValue!;
-                });
+                // Saat opsi diubah, update notesProvider.orderBy
+                notesProvider.orderBy = newValue!;
+                // Anda juga bisa menambahkan logika untuk toggle isDescending di sini jika diinginkan
+                // notesProvider.isDescending = !notesProvider.isDescending;
+              },
+            ),
+            // Tombol untuk mengubah arah pengurutan (Ascending/Descending)
+            NoteIconButton(
+              icon: notesProvider.isDescending
+                  ? Icons.arrow_downward
+                  : Icons.arrow_upward,
+              size: 16,
+              onPressed: () {
+                notesProvider.isDescending = !notesProvider.isDescending; // Toggle isDescending
               },
             ),
             const Spacer(),
@@ -68,9 +79,7 @@ class _ViewOptionsState extends State<ViewOptions> {
                   : Icons.list, // Ikon list
               size: 20,
               onPressed: () {
-                setState(() {
-                  notesProvider.isGrid = !notesProvider.isGrid;
-                });
+                notesProvider.isGrid = !notesProvider.isGrid; // Toggle isGrid
               },
             ),
           ],

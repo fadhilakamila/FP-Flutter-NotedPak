@@ -10,6 +10,7 @@ class Note {
   final DateTime dateModified;
   final DateTime dateCreated;
   final NoteType type; // Menambahkan field type
+  final List<String> tags;
 
   Note({
     required this.id,
@@ -18,5 +19,6 @@ class Note {
     required this.dateModified,
     required this.dateCreated,
     required this.type,
+    required this.tags,
   });
 }

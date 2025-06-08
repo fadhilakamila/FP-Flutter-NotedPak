@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
       ),
       debugShowCheckedModeBanner: false,
       
-      initialRoute: '/edit_note_direct',
+      initialRoute: '/register', // Set route awal ke halaman pendaftaran
 
       routes: {
         '/register': (context) => RegistrationPage(),

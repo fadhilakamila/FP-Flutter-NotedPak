@@ -20,6 +20,7 @@ class NotesProvider with ChangeNotifier {
         dateModified: DateTime(2025, 5, 31),
         dateCreated: DateTime(2025, 5, 30),
         type: NoteType.daily,
+        tags: ['Daily', 'Chores'], // <--- Pastikan ini ada
       ),
       Note(
         id: '2',
@@ -28,6 +29,7 @@ class NotesProvider with ChangeNotifier {
         dateModified: DateTime(2025, 4, 19),
         dateCreated: DateTime(2025, 4, 18),
         type: NoteType.daily,
+        tags: ['Daily', 'Hobby'], // <--- Pastikan ini ada
       ),
       Note(
         id: '3',
@@ -37,6 +39,7 @@ class NotesProvider with ChangeNotifier {
         dateModified: DateTime(2025, 3, 6),
         dateCreated: DateTime(2025, 3, 5),
         type: NoteType.college,
+        tags: ['College'], // <--- Pastikan ini ada
       ),
       Note(
         id: '4',
@@ -46,6 +49,7 @@ class NotesProvider with ChangeNotifier {
         dateModified: DateTime(2025, 3, 6),
         dateCreated: DateTime(2025, 3, 5),
         type: NoteType.life,
+        tags: ['Life', 'Goals'], // <--- Pastikan ini ada
       ),
       Note(
         id: '5',
@@ -55,6 +59,7 @@ class NotesProvider with ChangeNotifier {
         dateModified: DateTime(2025, 4, 17),
         dateCreated: DateTime(2025, 4, 16),
         type: NoteType.college,
+        tags: ['College', 'Database'], // <--- Pastikan ini ada
       ),
       Note(
         id: '6',
@@ -64,6 +69,7 @@ class NotesProvider with ChangeNotifier {
         dateModified: DateTime(2025, 1, 29),
         dateCreated: DateTime(2025, 1, 28),
         type: NoteType.work,
+        tags: ['Work', 'Project'], // <--- Pastikan ini ada
       ),
       Note(
         id: '7',
@@ -72,6 +78,7 @@ class NotesProvider with ChangeNotifier {
         dateModified: DateTime(2025, 12, 5),
         dateCreated: DateTime(2025, 12, 4),
         type: NoteType.hobby,
+        tags: ['Hobby', 'Sport'], // <--- Pastikan ini ada
       ),
       Note(
         id: '8',
@@ -80,6 +87,7 @@ class NotesProvider with ChangeNotifier {
         dateModified: DateTime(2025, 3, 6),
         dateCreated: DateTime(2025, 3, 5),
         type: NoteType.college,
+        tags: ['College', 'Reading'], // <--- Pastikan ini ada
       ),
     ];
     _sortNotes(); // Urutkan catatan awal
@@ -89,8 +97,9 @@ class NotesProvider with ChangeNotifier {
     // Filter catatan berdasarkan search term
     List<Note> filteredNotes = _allNotes.where((note) {
       final query = _searchTerm.toLowerCase();
-      return note.title.toLowerCase().contains(query) ||
-          note.content.toLowerCase().contains(query);
+      return query.isEmpty ||
+             note.title.toLowerCase().contains(query) ||
+             note.content.toLowerCase().contains(query);
     }).toList();
 
     // Urutkan catatan yang sudah difilter
@@ -124,6 +133,23 @@ class NotesProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void addNote(Note note) {
+    _allNotes.add(note);
+    print('Catatan baru ditambahkan. Jumlah catatan sekarang: ${_allNotes.length}');
+    _sortNotes();
+    notifyListeners();
+  }
+
+  // --- TAMBAHKAN METODE INI UNTUK UPDATE CATATAN ---
+  void updateNote(Note updatedNote) {
+    final index = _allNotes.indexWhere((note) => note.id == updatedNote.id);
+    if (index != -1) {
+      _allNotes[index] = updatedNote;
+      _sortNotes(); // Urutkan lagi setelah pembaruan
+      notifyListeners();
+    }
+  }
+
   void _sortNotes([List<Note>? notesList]) {
     final listToSort = notesList ?? _allNotes;
 
@@ -131,7 +157,7 @@ class NotesProvider with ChangeNotifier {
       int comparisonResult = 0;
       if (_orderBy == OrderOption.dateModified) {
         comparisonResult = a.dateModified.compareTo(b.dateModified);
-      } else if (_orderBy == OrderOption.dateModified) {
+      } else if (_orderBy == OrderOption.dateCreated) { // PERBAIKI TYPO INI JIKA BELUM
         comparisonResult = a.dateCreated.compareTo(b.dateCreated);
       }
 
