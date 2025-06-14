@@ -9,8 +9,16 @@ import 'package:noted_pak/pages/edit_page.dart'; // Impor NewOrEditNotePage dari
 
 import 'package:noted_pak/change_notifiers/notes_provider.dart';
 
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+
 void main() {
   runApp(MyApp());
+}
+
+Future<void> initializeFirebase() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 }
 
 class MyApp extends StatelessWidget {

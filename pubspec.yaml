@@ -1,6 +1,6 @@
 name: noted_pak
 description: "A new Flutter project."
-publish_to: 'none'
+publish_to: "none"
 version: 0.1.0
 
 environment:
@@ -12,6 +12,8 @@ dependencies:
   provider: ^6.0.5
   font_awesome_flutter: ^10.8.0
   intl: ^0.18.0
+  cupertino_icons: ^1.0.8
+  firebase_core: ^3.13.1
 
 dev_dependencies:
   flutter_test:
@@ -95,4 +97,3 @@ flutter:
           # Kamu mungkin tidak perlu menentukan weight secara eksplisit untuk variable font
         - asset: assets/fonts/Inter-VariableFont_opsz,wght.ttf
           # Ini adalah font variable. Flutter akan secara otomatis menyesuaikan weight berdasarkan 'wght'
-      

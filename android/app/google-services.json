@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "714995937854",
+    "project_id": "notedpak-app",
+    "storage_bucket": "notedpak-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:714995937854:android:5e3501bb2cd6f56cd3176f",
+        "android_client_info": {
+          "package_name": "com.example.noted_pak"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDY3R8SafCTmNQZW2I380gM13szOcoUY5Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
