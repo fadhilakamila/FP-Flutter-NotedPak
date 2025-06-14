@@ -181,11 +181,6 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
       // Logika penyimpanan yang sebenarnya hanya dijalankan jika dikonfirmasi
       if (!mounted) return;
       Navigator.pop(context, noteData);
-
-      Navigator.pop(
-        context,
-        noteData,
-      ); // Mengembalikan data dan kembali ke halaman sebelumnya
     }
   }
 
