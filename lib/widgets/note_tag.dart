@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 
 // Definisi warna primer dari LoginPage untuk konsistensi di seluruh widget
 const Color _primaryBlue = Color(0xFF4285F4);
-const Color _lightBorderColor = Color(
-  0xFFE9ECEF,
-); // Digunakan untuk border input field
+const Color _lightBorderColor = Color(0xFFE9ECEF);
 
 // Fungsi helper untuk mendapatkan warna latar belakang tag DotTag.
 // Ini adalah fungsi top-level dan bisa diakses dari file lain yang mengimpor note_tag.dart.
@@ -34,6 +32,8 @@ Color getDotTagBackgroundColor(String tag) {
       return Colors.cyan[700]!;
     case 'goals':
       return Colors.brown[700]!;
+    case 'uncategorized': // Tambahkan kasus untuk tag 'Uncategorized'
+      return Colors.grey[500]!; // Warna abu-abu untuk uncategorized
     default:
       return Colors.grey[700]!;
   }
@@ -131,7 +131,6 @@ class NoteTag extends StatelessWidget {
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(16),
-          // ignore: deprecated_member_use
           border: Border.all(color: bgColor.withOpacity(0.3), width: 1),
         ),
         child: Row(
@@ -155,7 +154,6 @@ class NoteTag extends StatelessWidget {
                   child: Icon(
                     Icons.close,
                     size: 14,
-                    // ignore: deprecated_member_use
                     color: txtColor.withOpacity(0.7),
                   ),
                 ),
@@ -292,14 +290,10 @@ class TagList extends StatelessWidget {
       spacing: spacing,
       runSpacing: runSpacing,
       children: [
-        // Menggunakan DotTag untuk tampilan di TagList agar konsisten dengan kartu catatan
         ...tags
             .map(
               (tag) => DotTag(
                 tag: tag,
-                // Karena TagList ini bisa digunakan di berbagai konteks,
-                // kita perlu menyediakan tombol hapus di sini jika onTagDelete ada.
-                // Ini membungkus DotTag dengan GestureDetector untuk menghapus.
                 child: onTagDelete != null
                     ? GestureDetector(
                         onTap: () => onTagDelete!(tag),
@@ -315,7 +309,6 @@ class TagList extends StatelessWidget {
                     : null,
               ),
             )
-            // ignore: unnecessary_to_list_in_spreads
             .toList(),
 
         if (showAddButton && onAddTag != null)
@@ -359,19 +352,17 @@ class TagList extends StatelessWidget {
 class DotTag extends StatelessWidget {
   final String tag;
   final Widget?
-  child; // Menambahkan child agar bisa disisipi widget lain (misal tombol delete)
+  child;
 
   const DotTag({
     super.key,
     required this.tag,
-    this.child, // Inisialisasi child
+    this.child,
   });
 
-  // Fungsi getBackgroundColor dipindahkan ke top-level dan namanya diubah di sana
-  // agar bisa diakses dari file lain. Di sini kita memanggil fungsi top-level tersebut.
   @override
   Widget build(BuildContext context) {
-    final bgColor = getDotTagBackgroundColor(tag); // Panggil fungsi top-level
+    final bgColor = getDotTagBackgroundColor(tag);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -387,7 +378,7 @@ class DotTag extends StatelessWidget {
             height: 8,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white, // Titik selalu putih
+              color: Colors.white,
             ),
           ),
           const SizedBox(width: 6),
@@ -399,7 +390,7 @@ class DotTag extends StatelessWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
-          if (child != null) // Menampilkan child jika ada (misal tombol delete)
+          if (child != null)
             child!,
         ],
       ),

@@ -1,5 +1,6 @@
 // lib/pages/main_page.dart
 import 'package:flutter/material.dart';
+import 'package:noted_pak/widgets/note_fab.dart';
 import 'package:provider/provider.dart';
 
 // Import komponen-komponen baru
@@ -7,7 +8,6 @@ import '../widgets/search_field.dart';
 import '../widgets/view_options.dart';
 import '../widgets/note_grid.dart';
 import '../widgets/note_list.dart';
-import '../widgets/note_fab.dart';
 
 import '../models/note.dart';
 import '../change_notifiers/notes_provider.dart';
@@ -130,18 +130,16 @@ class NotedPakHomePage extends StatelessWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: SearchField(), // Komponen SearchField
+                child: SearchField(),
               ),
               const SizedBox(height: 10),
               const ViewOptions(),
               Expanded(
                 child: notes.isEmpty
                     ? Center(
-                        // Jika catatan kosong, tampilkan logo dan teks "You have no notes yet"
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            // Icon/Logo NotedPak
                             SizedBox(
                               width: 120,
                               height: 120,
@@ -150,7 +148,6 @@ class NotedPakHomePage extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 32),
-                            // Text "You have no notes yet"
                             Column(
                               children: [
                                 Text(
@@ -185,9 +182,8 @@ class NotedPakHomePage extends StatelessWidget {
             ],
           ),
           floatingActionButton: NoteFab(
-            // <--- PERUBAHAN PENTING: MENGGANTI KODE LAMA DENGAN NoteFab
             onPressed: () {
-              _showAddNoteDialog(context); // Memanggil fungsi yang sudah ada
+              _showAddNoteDialog(context);
             },
           ),
         );
@@ -199,27 +195,32 @@ class NotedPakHomePage extends StatelessWidget {
     if (noteData != null) {
       final notesProvider = Provider.of<NotesProvider>(context, listen: false);
 
-      NoteType noteType;
-      try {
-        noteType = NoteType.values.firstWhere(
-          (e) => e.toString().split('.').last == noteData['type'],
-          orElse: () => NoteType.daily,
-        );
-      } catch (e) {
-        noteType = NoteType.daily;
-      }
+      // NoteType noteType;
+      // try {
+      //   noteType = NoteType.values.firstWhere(
+      //     (e) => e.toString().split('.').last == noteData['type'],
+      //     orElse: () => NoteType.daily,
+      //   );
+      // } catch (e) {
+      //   noteType = NoteType.daily;
+      // }
 
-      DateTime createdDate = DateTime.parse(noteData['createdDate']);
-      DateTime lastModifiedDate = DateTime.parse(noteData['lastModifiedDate']);
+      DateTime createdDate = noteData['dateCreated'] is DateTime 
+          ? noteData['dateCreated'] 
+          : DateTime.parse(noteData['dateCreated']);
+      DateTime lastModifiedDate = noteData['dateModified'] is DateTime
+          ? noteData['dateModified']
+          : DateTime.parse(noteData['dateModified']);
+
 
       Note newOrUpdatedNote = Note(
-        id: noteData['id'] ?? (notesProvider.notes.length + 1).toString(),
+        id: noteData['id'] as String?, // Memastikan id adalah String atau null
         title: noteData['title'],
         content: noteData['content'],
         tags: List<String>.from(noteData['tags'] ?? []),
         dateCreated: createdDate,
         dateModified: lastModifiedDate,
-        type: noteType,
+        // Menghapus type: noteType,
       );
 
       if (notesProvider.notes.any((n) => n.id == newOrUpdatedNote.id)) {

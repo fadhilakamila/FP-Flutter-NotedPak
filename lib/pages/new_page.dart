@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:noted_pak/widgets/new_tag_dialog.dart'; // Pastikan path ini benar
-import 'package:noted_pak/widgets/note_tag.dart'; // Pastikan path ini benar
+import 'package:noted_pak/widgets/new_tag_dialog.dart';
+import 'package:noted_pak/widgets/note_tag.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Tambahkan ini
 
 // Definisi warna primer dan lainnya yang konsisten dengan LoginPage
 const Color _primaryBlue = Color(0xFF4285F4);
 const Color _lightBorderColor = Color(0xFFE9ECEF);
+const Color _darkTextColor = Colors.black87; // Tambahkan ini jika dibutuhkan
 
 class NewOrEditNotePage extends StatefulWidget {
   final Map<String, dynamic>? existingNote;
   final bool isReadOnly;
 
   const NewOrEditNotePage({
-    super.key, // ✅ gunakan super.key, bukan Key? key
+    super.key,
     this.existingNote,
     this.isReadOnly = false,
   });
@@ -23,9 +25,9 @@ class NewOrEditNotePage extends StatefulWidget {
 class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
   late TextEditingController _titleController;
   late TextEditingController _contentController;
-  List<String> _tags = []; // Daftar tag yang dimiliki catatan ini
-  DateTime? _createdDate;
-  DateTime? _lastModifiedDate;
+  List<String> _tags = [];
+  DateTime? _dateCreated; // Ubah nama variabel agar konsisten dengan Note model
+  DateTime? _dateModified; // Ubah nama variabel agar konsisten dengan Note model
 
   // Variabel untuk gaya teks Rich Text Editor
   bool _isBold = false;
@@ -33,13 +35,10 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
   bool _isUnderline = false;
   bool _isStrikethrough = false;
 
-  // List ini akan menyimpan semua tag yang pernah dibuat oleh user di aplikasi.
-  // Dalam aplikasi nyata, ini akan diambil dari database atau penyimpanan lokal.
-  // Untuk tujuan demo, ini adalah data dummy.
   final List<String> _allExistingUserTags = [
     'Personal Routine', 'Life', 'College', 'Work', 'Health',
     'Finance', 'Travel', 'Ideas', 'Shopping', 'Goals',
-    'Hobby', 'Daily', // Menambahkan contoh tag dari DotTag
+    'Hobby', 'Daily',
   ];
 
   @override
@@ -59,32 +58,40 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
       _titleController.text = widget.existingNote!['title'] ?? '';
       _contentController.text = widget.existingNote!['content'] ?? '';
       _tags = List<String>.from(widget.existingNote!['tags'] ?? []);
-      _createdDate = widget.existingNote!['createdDate'];
-      _lastModifiedDate = widget.existingNote!['lastModifiedDate'];
+      
+      // Menggunakan kunci yang sesuai dengan model Note, dan _parseDate sudah menangani null.
+      _dateCreated = _parseDate(widget.existingNote!['dateCreated']);
+      _dateModified = _parseDate(widget.existingNote!['dateModified']);
+      
+      for (var tag in _tags) {
+        if (!_allExistingUserTags.contains(tag)) {
+          _allExistingUserTags.add(tag);
+        }
+      }
     } else {
-      _createdDate = DateTime.now();
-      _lastModifiedDate = DateTime.now();
+      _dateCreated = DateTime.now();
+      _dateModified = DateTime.now();
     }
   }
 
-  String _formatDate(DateTime date) {
-    return "${date.day} ${_getMonthName(date.month)} ${date.year}, ${date.hour.toString().padLeft(2, '0')}.${date.minute.toString().padLeft(2, '0')} ${date.hour >= 12 ? 'PM' : 'AM'}";
+  DateTime? _parseDate(dynamic date) {
+    if (date is DateTime) {
+      return date;
+    } else if (date is String) {
+      return DateTime.tryParse(date);
+    } else if (date is Timestamp) {
+      return date.toDate();
+    }
+    return null; // Jika input adalah null, atau tipe lain yang tidak diharapkan, kembalikan null
   }
+
+  String _formatDate(DateTime date) {
+return "${date.day} ${_getMonthName(date.month)} ${date.year}, ${date.hour.toString().padLeft(2, '0')}.${date.minute.toString().padLeft(2, '0')} ${date.hour >= 12 ? 'PM' : 'AM'}";  }
 
   String _getMonthName(int month) {
     const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
     ];
     return months[month - 1];
   }
@@ -93,17 +100,15 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
     final newTag = await showDialog<String>(
       context: context,
       builder: (context) => NewTagDialog(
-        // Memanggil NewTagDialog
-        existingTags:
-            _allExistingUserTags, // Mengirim semua tag yang pernah dibuat
-        currentNoteTags: _tags, // Mengirim tag yang sudah ada di catatan ini
+        existingTags: _allExistingUserTags,
+        currentNoteTags: _tags,
       ),
     );
 
     if (newTag != null && newTag.isNotEmpty && !_tags.contains(newTag)) {
       setState(() {
         _tags.add(newTag);
-        _lastModifiedDate = DateTime.now();
+        _dateModified = DateTime.now();
         if (!_allExistingUserTags.contains(newTag)) {
           _allExistingUserTags.add(newTag);
         }
@@ -114,19 +119,19 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
   void _removeTag(String tag) {
     setState(() {
       _tags.remove(tag);
-      _lastModifiedDate = DateTime.now();
+      _dateModified = DateTime.now();
     });
   }
 
   void _saveNote() {
     final noteData = {
       'title': _titleController.text.isEmpty
-          ? 'Title here..'
+          ? 'Untitled Note' // Mengganti 'Title here..'
           : _titleController.text,
       'content': _contentController.text,
       'tags': _tags,
-      'createdDate': _createdDate,
-      'lastModifiedDate': DateTime.now(),
+      'dateCreated': _dateCreated?.toIso8601String(), // Sesuaikan dengan model Note
+      'dateModified': DateTime.now().toIso8601String(), // Sesuaikan dengan model Note
     };
 
     Navigator.pop(context, noteData);
@@ -134,7 +139,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
 
   @override
   Widget build(BuildContext context) {
-    final isEditing = widget.existingNote != null;
+    final isNewNote = widget.existingNote == null; // Ubah isEditing menjadi isNewNote
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -146,11 +151,11 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          isEditing
-              ? 'Edit Note'
-              : 'New Note', // Teks ini akan menampilkan "New Note" jika existingNote null
+          isNewNote
+              ? 'New Note'
+              : 'Edit Note',
           style: const TextStyle(
-            color: _primaryBlue, // Warna teks judul AppBar adalah biru
+            color: _primaryBlue,
             fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
@@ -158,7 +163,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.book_outlined, color: _primaryBlue),
-            onPressed: widget.isReadOnly ? null : () {},
+            onPressed: widget.isReadOnly ? null : () { /* Implement functionality */ },
           ),
           TextButton(
             onPressed: widget.isReadOnly ? null : _saveNote,
@@ -173,7 +178,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
           ),
           IconButton(
             icon: const Icon(Icons.more_horiz, color: _primaryBlue),
-            onPressed: () {},
+            onPressed: () { /* Implement functionality */ },
           ),
         ],
       ),
@@ -205,7 +210,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                   ),
                   onChanged: (value) {
                     setState(() {
-                      _lastModifiedDate = DateTime.now();
+                      _dateModified = DateTime.now();
                     });
                   },
                 ),
@@ -213,7 +218,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                 const SizedBox(height: 16),
 
                 // Date Information (hanya tampil jika mengedit catatan yang sudah ada)
-                if (isEditing) ...[
+                if (!isNewNote) ...[
                   Row(
                     children: [
                       Text(
@@ -222,7 +227,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                       ),
                       const Spacer(),
                       Text(
-                        _formatDate(_createdDate!),
+                        _formatDate(_dateCreated!),
                         style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
                     ],
@@ -236,7 +241,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                       ),
                       const Spacer(),
                       Text(
-                        _formatDate(_lastModifiedDate!),
+                        _formatDate(_dateModified!),
                         style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
                     ],
@@ -289,9 +294,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                     children: _tags
                         .map(
                           (tag) => DotTag(
-                            // Menggunakan DotTag
                             tag: tag,
-                            // Tombol silang untuk menghapus tag, hanya jika tidak read-only
                             child: widget.isReadOnly
                                 ? null
                                 : GestureDetector(
@@ -299,12 +302,12 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                                     child: Container(
                                       padding: const EdgeInsets.only(
                                         left: 6,
-                                      ), // Padding ke kiri untuk ikon silang
+                                      ),
                                       child: const Icon(
                                         Icons.close,
                                         size: 14,
                                         color: Colors
-                                            .white, // Ikon silang tetap putih
+                                            .white,
                                       ),
                                     ),
                                   ),
@@ -356,14 +359,14 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                         ),
                         onChanged: (value) {
                           setState(() {
-                            _lastModifiedDate = DateTime.now();
+                            _dateModified = DateTime.now();
                           });
                         },
                       ),
                     ),
                   ),
 
-                  // Rich Text Toolbar (sesuai desain UI)
+                  // Rich Text Toolbar
                   if (!widget.isReadOnly)
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -381,16 +384,12 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                           IconButton(
                             icon: const Icon(Icons.undo),
                             color: Colors.grey[600],
-                            onPressed: () {
-                              /* Implement undo functionality */
-                            },
+                            onPressed: () { /* Implement undo functionality */ },
                           ),
                           IconButton(
                             icon: const Icon(Icons.redo),
                             color: Colors.grey[600],
-                            onPressed: () {
-                              /* Implement redo functionality */
-                            },
+                            onPressed: () { /* Implement redo functionality */ },
                           ),
 
                           const SizedBox(width: 8),
@@ -441,9 +440,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                           IconButton(
                             icon: const Icon(Icons.format_list_bulleted),
                             color: Colors.grey[600],
-                            onPressed: () {
-                              /* Implement bullet list functionality */
-                            },
+                            onPressed: () { /* Implement bullet list functionality */ },
                           ),
                         ],
                       ),

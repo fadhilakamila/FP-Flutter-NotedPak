@@ -160,7 +160,7 @@ return "${date.day} ${_getMonthName(date.month)} ${date.year}, ${date.hour.toStr
         tags: _tags,
         dateCreated: _dateCreated ?? DateTime.now(),
         dateModified: DateTime.now(),
-        type: NoteType.daily, 
+        // Menghapus type: NoteType.daily,
       );
 
       if (newOrUpdatedNote.id == null) {

@@ -1,12 +1,11 @@
-// lib/change_notifiers/notes_provider.dart
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Pastikan ini ada
-import '../models/note.dart'; // Pastikan path ini benar
-import '../enums/order_option.dart'; // Pastikan path ini benar
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/note.dart';
+import '../enums/order_option.dart';
 
 class NotesProvider with ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final String _collectionName = 'notes'; // Nama koleksi Anda di Firestore
+  final String _collectionName = 'notes';
 
   List<Note> _allNotes = [];
   String _searchTerm = '';
@@ -15,24 +14,24 @@ class NotesProvider with ChangeNotifier {
   bool _isGrid = true;
 
   NotesProvider() {
-    print('NotesProvider initialized. Attempting to fetch notes on startup...'); // Debugging
+    print('NotesProvider initialized. Attempting to fetch notes on startup...');
     fetchNotes();
   }
 
   // Metode untuk mengambil semua catatan dari Firestore
   Future<void> fetchNotes() async {
     try {
-      print('>>> fetchNotes: Starting to fetch documents from collection "$_collectionName"...'); // Debugging
+      print('>>> fetchNotes: Starting to fetch documents from collection "$_collectionName"...');
       QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore.collection(_collectionName).get();
-      print('<<< fetchNotes: Successfully fetched ${snapshot.docs.length} documents.'); // Debugging
+      print('<<< fetchNotes: Successfully fetched ${snapshot.docs.length} documents.');
 
       _allNotes = snapshot.docs.map((doc) {
         try {
           final note = Note.fromFirestore(doc);
-          print('      - Parsed document ID: ${doc.id} -> Title: ${note.title}'); // Debugging per dokumen
+          print('      - Parsed document ID: ${doc.id} -> Title: ${note.title}');
           return note;
         } catch (e) {
-          print('!!! fetchNotes: Error parsing document with ID: ${doc.id}. Error: $e'); // Debugging error parsing
+          print('!!! fetchNotes: Error parsing document with ID: ${doc.id}. Error: $e');
           // Jika ada error parsing, buat catatan dummy agar tidak crash seluruh aplikasi.
           // Ini membantu melacak dokumen mana yang bermasalah.
           return Note(
@@ -41,18 +40,18 @@ class NotesProvider with ChangeNotifier {
             content: 'Failed to load content for this note due to a data error.',
             dateModified: DateTime.now(),
             dateCreated: DateTime.now(),
-            type: NoteType.daily, // Atau tipe default lainnya
+            // Menghapus type: NoteType.daily,
             tags: ['parsing-error'],
           );
         }
       }).toList();
 
-      print('>>> fetchNotes: All documents processed. Total notes in _allNotes: ${_allNotes.length}'); // Debugging
+      print('>>> fetchNotes: All documents processed. Total notes in _allNotes: ${_allNotes.length}');
       _sortNotes();
       notifyListeners();
-      print('<<< fetchNotes: notifyListeners() called. UI should update.'); // Debugging
+      print('<<< fetchNotes: notifyListeners() called. UI should update.');
     } catch (e) {
-      print('!!! fetchNotes: Main error during fetching process: $e'); // Debugging error utama
+      print('!!! fetchNotes: Main error during fetching process: $e');
       // Tampilkan SnackBar atau pesan error di UI jika Anda mau
     }
   }
@@ -103,16 +102,16 @@ class NotesProvider with ChangeNotifier {
       _allNotes.add(note);
       _sortNotes();
       notifyListeners();
-      print('>>> addNote: Note added to Firestore and local list. ID: ${note.id}'); // Debugging
+      print('>>> addNote: Note added to Firestore and local list. ID: ${note.id}');
     } catch (e) {
-      print('!!! addNote: Error adding note: $e'); // Debugging error
+      print('!!! addNote: Error adding note: $e');
     }
   }
 
   Future<void> updateNote(Note updatedNote) async {
     try {
       if (updatedNote.id == null || updatedNote.id!.isEmpty) {
-        print("!!! updateNote: Error: Cannot update note without an ID."); // Debugging error
+        print("!!! updateNote: Error: Cannot update note without an ID.");
         return;
       }
       await _firestore.collection(_collectionName).doc(updatedNote.id).update(updatedNote.toFirestore());
@@ -122,10 +121,10 @@ class NotesProvider with ChangeNotifier {
         _allNotes[index] = updatedNote;
         _sortNotes();
         notifyListeners();
-        print('>>> updateNote: Note updated in Firestore and local list. ID: ${updatedNote.id}'); // Debugging
+        print('>>> updateNote: Note updated in Firestore and local list. ID: ${updatedNote.id}');
       }
     } catch (e) {
-      print('!!! updateNote: Error updating note: $e'); // Debugging error
+      print('!!! updateNote: Error updating note: $e');
     }
   }
 
@@ -136,9 +135,9 @@ class NotesProvider with ChangeNotifier {
       _allNotes.removeWhere((note) => note.id == noteId);
       _sortNotes();
       notifyListeners();
-      print('>>> deleteNote: Note deleted from Firestore and local list. ID: $noteId'); // Debugging
+      print('>>> deleteNote: Note deleted from Firestore and local list. ID: $noteId');
     } catch (e) {
-      print('!!! deleteNote: Error deleting note: $e'); // Debugging error
+      print('!!! deleteNote: Error deleting note: $e');
     }
   }
 
