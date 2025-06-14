@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(primarySwatch: Colors.blue, fontFamily: 'Inter'),
       debugShowCheckedModeBanner: false,
 
-      initialRoute: '/register', // Set route awal ke halaman pendaftaran
+      initialRoute: '/login', // Set route awal ke halaman pendaftaran
 
       routes: {
         '/register': (context) => RegistrationPage(),

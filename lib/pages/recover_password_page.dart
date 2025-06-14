@@ -167,8 +167,10 @@ class _RecoverPasswordPageState extends State<RecoverPasswordPage> {
           buttonText: 'OK',
           buttonColor: const Color(0xFF4285F4),
           onButtonPressed: () {
-            Navigator.of(context).pop(); // Tutup dialog
-            Navigator.of(context).pop(); // Kembali ke halaman login
+            Navigator.of(context).pop(); // Menutup dialog
+            Navigator.of(
+              context,
+            ).pushReplacementNamed('/login'); // Menuju login
           },
         );
       },
