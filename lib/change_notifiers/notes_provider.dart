@@ -1,101 +1,63 @@
 // lib/change_notifiers/notes_provider.dart
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Pastikan ini ada
 import '../models/note.dart'; // Pastikan path ini benar
 import '../enums/order_option.dart'; // Pastikan path ini benar
 
 class NotesProvider with ChangeNotifier {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final String _collectionName = 'notes'; // Nama koleksi Anda di Firestore
+
   List<Note> _allNotes = [];
   String _searchTerm = '';
-  OrderOption _orderBy = OrderOption.dateModified; // Default pengurutan
-  bool _isDescending = true; // Default descending
-  bool _isGrid = true; // Default tampilan grid
+  OrderOption _orderBy = OrderOption.dateModified;
+  bool _isDescending = true;
+  bool _isGrid = true;
 
   NotesProvider() {
-    // Data dummy sesuai dengan gambar yang kamu berikan
-    _allNotes = [
-      Note(
-        id: '1',
-        title: 'To Do List',
-        content: '• House chores\n• 30 min run\n• Read a book\n• Laundry',
-        dateModified: DateTime(2025, 5, 31),
-        dateCreated: DateTime(2025, 5, 30),
-        type: NoteType.daily,
-        tags: ['Daily', 'Chores'], // <--- Pastikan ini ada
-      ),
-      Note(
-        id: '2',
-        title: 'Daily Task',
-        content: '• Study\n• Break\n• Mop the floors\n• Running a dog',
-        dateModified: DateTime(2025, 4, 19),
-        dateCreated: DateTime(2025, 4, 18),
-        type: NoteType.daily,
-        tags: ['Daily', 'Hobby'], // <--- Pastikan ini ada
-      ),
-      Note(
-        id: '3',
-        title: 'Budak Korporat??',
-        content:
-            'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-        dateModified: DateTime(2025, 3, 6),
-        dateCreated: DateTime(2025, 3, 5),
-        type: NoteType.college,
-        tags: ['College'], // <--- Pastikan ini ada
-      ),
-      Note(
-        id: '4',
-        title: 'Goals',
-        content:
-            'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
-        dateModified: DateTime(2025, 3, 6),
-        dateCreated: DateTime(2025, 3, 5),
-        type: NoteType.life,
-        tags: ['Life', 'Goals'], // <--- Pastikan ini ada
-      ),
-      Note(
-        id: '5',
-        title: 'Database System W4',
-        content:
-            'Normalization>on process of ordening bae,<\ndata structures to ensure that tye basic data\ncreated is 04.9C0A quabtv\nUsed to minimize data\nredundancy and data\ninconsistency.\nNormalization stage starts\nfrom the highest\nstand (INF) to the (S>XF).\nUsually\nup to the or level as they •re\nsuffic•ent to produce good\nquality tobles',
-        dateModified: DateTime(2025, 4, 17),
-        dateCreated: DateTime(2025, 4, 16),
-        type: NoteType.college,
-        tags: ['College', 'Database'], // <--- Pastikan ini ada
-      ),
-      Note(
-        id: '6',
-        title: 'My Project',
-        content:
-            'Meeting with KONE\nas lift vendor\nimportant to win the\ntender\ncall pak megantara\nas the PM',
-        dateModified: DateTime(2025, 1, 29),
-        dateCreated: DateTime(2025, 1, 28),
-        type: NoteType.work,
-        tags: ['Work', 'Project'], // <--- Pastikan ini ada
-      ),
-      Note(
-        id: '7',
-        title: 'Tennis',
-        content:
-            'tenis ku suka tenis\nkami sukanya apa?\naku suka kamu aw\ntenis tenis apa yang\nlucu? tenis sama\nkamu awww',
-        dateModified: DateTime(2025, 12, 5),
-        dateCreated: DateTime(2025, 12, 4),
-        type: NoteType.hobby,
-        tags: ['Hobby', 'Sport'], // <--- Pastikan ini ada
-      ),
-      Note(
-        id: '8',
-        title: 'Reading Notes',
-        content: '', // Konten kosong karena di gambar tidak ada
-        dateModified: DateTime(2025, 3, 6),
-        dateCreated: DateTime(2025, 3, 5),
-        type: NoteType.college,
-        tags: ['College', 'Reading'], // <--- Pastikan ini ada
-      ),
-    ];
-    _sortNotes(); // Urutkan catatan awal
+    print('NotesProvider initialized. Attempting to fetch notes on startup...'); // Debugging
+    fetchNotes();
+  }
+
+  // Metode untuk mengambil semua catatan dari Firestore
+  Future<void> fetchNotes() async {
+    try {
+      print('>>> fetchNotes: Starting to fetch documents from collection "$_collectionName"...'); // Debugging
+      QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore.collection(_collectionName).get();
+      print('<<< fetchNotes: Successfully fetched ${snapshot.docs.length} documents.'); // Debugging
+
+      _allNotes = snapshot.docs.map((doc) {
+        try {
+          final note = Note.fromFirestore(doc);
+          print('      - Parsed document ID: ${doc.id} -> Title: ${note.title}'); // Debugging per dokumen
+          return note;
+        } catch (e) {
+          print('!!! fetchNotes: Error parsing document with ID: ${doc.id}. Error: $e'); // Debugging error parsing
+          // Jika ada error parsing, buat catatan dummy agar tidak crash seluruh aplikasi.
+          // Ini membantu melacak dokumen mana yang bermasalah.
+          return Note(
+            id: doc.id,
+            title: 'Error Parsing Note',
+            content: 'Failed to load content for this note due to a data error.',
+            dateModified: DateTime.now(),
+            dateCreated: DateTime.now(),
+            type: NoteType.daily, // Atau tipe default lainnya
+            tags: ['parsing-error'],
+          );
+        }
+      }).toList();
+
+      print('>>> fetchNotes: All documents processed. Total notes in _allNotes: ${_allNotes.length}'); // Debugging
+      _sortNotes();
+      notifyListeners();
+      print('<<< fetchNotes: notifyListeners() called. UI should update.'); // Debugging
+    } catch (e) {
+      print('!!! fetchNotes: Main error during fetching process: $e'); // Debugging error utama
+      // Tampilkan SnackBar atau pesan error di UI jika Anda mau
+    }
   }
 
   List<Note> get notes {
-    // Filter catatan berdasarkan search term
     List<Note> filteredNotes = _allNotes.where((note) {
       final query = _searchTerm.toLowerCase();
       return query.isEmpty ||
@@ -103,7 +65,6 @@ class NotesProvider with ChangeNotifier {
           note.content.toLowerCase().contains(query);
     }).toList();
 
-    // Urutkan catatan yang sudah difilter
     _sortNotes(filteredNotes);
     return filteredNotes;
   }
@@ -134,22 +95,50 @@ class NotesProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void addNote(Note note) {
-    _allNotes.add(note);
-    debugPrint(
-      'Catatan baru ditambahkan. Jumlah catatan sekarang: ${_allNotes.length}',
-    );
-    _sortNotes();
-    notifyListeners();
+  Future<void> addNote(Note note) async {
+    try {
+      DocumentReference docRef = await _firestore.collection(_collectionName).add(note.toFirestore());
+      note.id = docRef.id;
+
+      _allNotes.add(note);
+      _sortNotes();
+      notifyListeners();
+      print('>>> addNote: Note added to Firestore and local list. ID: ${note.id}'); // Debugging
+    } catch (e) {
+      print('!!! addNote: Error adding note: $e'); // Debugging error
+    }
   }
 
-  // --- TAMBAHKAN METODE INI UNTUK UPDATE CATATAN ---
-  void updateNote(Note updatedNote) {
-    final index = _allNotes.indexWhere((note) => note.id == updatedNote.id);
-    if (index != -1) {
-      _allNotes[index] = updatedNote;
-      _sortNotes(); // Urutkan lagi setelah pembaruan
+  Future<void> updateNote(Note updatedNote) async {
+    try {
+      if (updatedNote.id == null || updatedNote.id!.isEmpty) {
+        print("!!! updateNote: Error: Cannot update note without an ID."); // Debugging error
+        return;
+      }
+      await _firestore.collection(_collectionName).doc(updatedNote.id).update(updatedNote.toFirestore());
+      
+      int index = _allNotes.indexWhere((n) => n.id == updatedNote.id);
+      if (index != -1) {
+        _allNotes[index] = updatedNote;
+        _sortNotes();
+        notifyListeners();
+        print('>>> updateNote: Note updated in Firestore and local list. ID: ${updatedNote.id}'); // Debugging
+      }
+    } catch (e) {
+      print('!!! updateNote: Error updating note: $e'); // Debugging error
+    }
+  }
+
+  Future<void> deleteNote(String noteId) async {
+    try {
+      await _firestore.collection(_collectionName).doc(noteId).delete();
+      
+      _allNotes.removeWhere((note) => note.id == noteId);
+      _sortNotes();
       notifyListeners();
+      print('>>> deleteNote: Note deleted from Firestore and local list. ID: $noteId'); // Debugging
+    } catch (e) {
+      print('!!! deleteNote: Error deleting note: $e'); // Debugging error
     }
   }
 
@@ -161,8 +150,9 @@ class NotesProvider with ChangeNotifier {
       if (_orderBy == OrderOption.dateModified) {
         comparisonResult = a.dateModified.compareTo(b.dateModified);
       } else if (_orderBy == OrderOption.dateCreated) {
-        // PERBAIKI TYPO INI JIKA BELUM
         comparisonResult = a.dateCreated.compareTo(b.dateCreated);
+      } else {
+        comparisonResult = a.title.compareTo(b.title);
       }
 
       return _isDescending ? -comparisonResult : comparisonResult;
