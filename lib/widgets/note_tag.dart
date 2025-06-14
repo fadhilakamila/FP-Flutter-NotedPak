@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 
 // Definisi warna primer dari LoginPage untuk konsistensi di seluruh widget
 const Color _primaryBlue = Color(0xFF4285F4);
-const Color _lightGreyBackground = Color(0xFFF8F9FA); // Digunakan untuk background input field
-const Color _lightBorderColor = Color(0xFFE9ECEF);   // Digunakan untuk border input field
-const Color _darkTextColor = Colors.black87; // Untuk teks judul AppBar, dll.
-
+const Color _lightBorderColor = Color(
+  0xFFE9ECEF,
+); // Digunakan untuk border input field
 
 // Fungsi helper untuk mendapatkan warna latar belakang tag DotTag.
 // Ini adalah fungsi top-level dan bisa diakses dari file lain yang mengimpor note_tag.dart.
-Color getDotTagBackgroundColor(String tag) { 
+Color getDotTagBackgroundColor(String tag) {
   switch (tag.toLowerCase()) {
     case 'hobby':
       return Colors.purple[700]!;
@@ -18,7 +17,7 @@ Color getDotTagBackgroundColor(String tag) {
     case 'college':
       return Colors.orange[700]!;
     case 'personal routine':
-      return Colors.purple[700]!; 
+      return Colors.purple[700]!;
     case 'life':
       return Colors.red[700]!;
     case 'work':
@@ -54,7 +53,7 @@ class NoteTag extends StatelessWidget {
   final double? fontSize;
 
   const NoteTag({
-    Key? key,
+    super.key,
     required this.tag,
     this.onDelete,
     this.onTap,
@@ -63,7 +62,7 @@ class NoteTag extends StatelessWidget {
     this.showDeleteButton = true,
     this.padding,
     this.fontSize,
-  }) : super(key: key);
+  });
 
   Color _getTagColor(String tag) {
     switch (tag.toLowerCase()) {
@@ -127,17 +126,13 @@ class NoteTag extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: padding ?? const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 6,
-        ),
+        padding:
+            padding ?? const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: bgColor.withOpacity(0.3),
-            width: 1,
-          ),
+          // ignore: deprecated_member_use
+          border: Border.all(color: bgColor.withOpacity(0.3), width: 1),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -150,7 +145,7 @@ class NoteTag extends StatelessWidget {
                 fontWeight: FontWeight.w500,
               ),
             ),
-            
+
             if (showDeleteButton && onDelete != null) ...[
               const SizedBox(width: 6),
               GestureDetector(
@@ -160,6 +155,7 @@ class NoteTag extends StatelessWidget {
                   child: Icon(
                     Icons.close,
                     size: 14,
+                    // ignore: deprecated_member_use
                     color: txtColor.withOpacity(0.7),
                   ),
                 ),
@@ -180,21 +176,18 @@ class ReadOnlyNoteTag extends StatelessWidget {
   final VoidCallback? onTap;
 
   const ReadOnlyNoteTag({
-    Key? key,
+    super.key,
     required this.tag,
     this.isSelected = false,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 6,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected ? _primaryBlue : Colors.grey[100],
           borderRadius: BorderRadius.circular(16),
@@ -226,22 +219,19 @@ class BlueNoteTag extends StatelessWidget {
   final bool showDeleteButton;
 
   const BlueNoteTag({
-    Key? key,
+    super.key,
     required this.tag,
     this.onDelete,
     this.onTap,
     this.showDeleteButton = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 8,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: _primaryBlue, // Latar belakang selalu biru
           borderRadius: BorderRadius.circular(20),
@@ -257,16 +247,12 @@ class BlueNoteTag extends StatelessWidget {
                 fontWeight: FontWeight.w500,
               ),
             ),
-            
+
             if (showDeleteButton && onDelete != null) ...[
               const SizedBox(width: 8),
               GestureDetector(
                 onTap: onDelete,
-                child: const Icon(
-                  Icons.close,
-                  size: 16,
-                  color: Colors.white,
-                ),
+                child: const Icon(Icons.close, size: 16, color: Colors.white),
               ),
             ],
           ],
@@ -288,7 +274,7 @@ class TagList extends StatelessWidget {
   final double runSpacing;
 
   const TagList({
-    Key? key,
+    super.key,
     required this.tags,
     this.onTagDelete,
     this.onTagTap,
@@ -297,7 +283,7 @@ class TagList extends StatelessWidget {
     this.alignment = WrapAlignment.start,
     this.spacing = 8.0,
     this.runSpacing = 8.0,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -307,28 +293,36 @@ class TagList extends StatelessWidget {
       runSpacing: runSpacing,
       children: [
         // Menggunakan DotTag untuk tampilan di TagList agar konsisten dengan kartu catatan
-        ...tags.map((tag) => DotTag(
-          tag: tag,
-          // Karena TagList ini bisa digunakan di berbagai konteks,
-          // kita perlu menyediakan tombol hapus di sini jika onTagDelete ada.
-          // Ini membungkus DotTag dengan GestureDetector untuk menghapus.
-          child: onTagDelete != null ? GestureDetector(
-            onTap: () => onTagDelete!(tag),
-            child: Container(
-              padding: const EdgeInsets.only(left: 6),
-              child: const Icon(Icons.close, size: 14, color: Colors.white),
-            ),
-          ) : null,
-        )).toList(),
-        
+        ...tags
+            .map(
+              (tag) => DotTag(
+                tag: tag,
+                // Karena TagList ini bisa digunakan di berbagai konteks,
+                // kita perlu menyediakan tombol hapus di sini jika onTagDelete ada.
+                // Ini membungkus DotTag dengan GestureDetector untuk menghapus.
+                child: onTagDelete != null
+                    ? GestureDetector(
+                        onTap: () => onTagDelete!(tag),
+                        child: Container(
+                          padding: const EdgeInsets.only(left: 6),
+                          child: const Icon(
+                            Icons.close,
+                            size: 14,
+                            color: Colors.white,
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
+            )
+            // ignore: unnecessary_to_list_in_spreads
+            .toList(),
+
         if (showAddButton && onAddTag != null)
           GestureDetector(
             onTap: onAddTag,
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 6,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: Colors.grey[100],
                 borderRadius: BorderRadius.circular(16),
@@ -341,11 +335,7 @@ class TagList extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.add,
-                    size: 16,
-                    color: Colors.grey[600],
-                  ),
+                  Icon(Icons.add, size: 16, color: Colors.grey[600]),
                   const SizedBox(width: 4),
                   Text(
                     'Add tag',
@@ -364,18 +354,18 @@ class TagList extends StatelessWidget {
   }
 }
 
-
 /// Widget tag dengan titik berwarna di depannya, sesuai dengan desain UI di gambar.
 /// Digunakan untuk tampilan read-only pada daftar catatan.
 class DotTag extends StatelessWidget {
   final String tag;
-  final Widget? child; // Menambahkan child agar bisa disisipi widget lain (misal tombol delete)
+  final Widget?
+  child; // Menambahkan child agar bisa disisipi widget lain (misal tombol delete)
 
   const DotTag({
-    Key? key,
+    super.key,
     required this.tag,
     this.child, // Inisialisasi child
-  }) : super(key: key);
+  });
 
   // Fungsi getBackgroundColor dipindahkan ke top-level dan namanya diubah di sana
   // agar bisa diakses dari file lain. Di sini kita memanggil fungsi top-level tersebut.

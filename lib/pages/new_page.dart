@@ -1,22 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:noted_pak/widgets/new_tag_dialog.dart'; // Pastikan path ini benar
-import 'package:noted_pak/widgets/note_tag.dart';     // Pastikan path ini benar
+import 'package:noted_pak/widgets/note_tag.dart'; // Pastikan path ini benar
 
 // Definisi warna primer dan lainnya yang konsisten dengan LoginPage
 const Color _primaryBlue = Color(0xFF4285F4);
-const Color _lightGreyBackground = Color(0xFFF8F9FA);
 const Color _lightBorderColor = Color(0xFFE9ECEF);
-const Color _darkTextColor = Colors.black87; // Untuk teks judul AppBar, dll.
 
 class NewOrEditNotePage extends StatefulWidget {
   final Map<String, dynamic>? existingNote;
   final bool isReadOnly;
 
   const NewOrEditNotePage({
-    Key? key,
+    super.key, // ✅ gunakan super.key, bukan Key? key
     this.existingNote,
     this.isReadOnly = false,
-  }) : super(key: key);
+  });
 
   @override
   State<NewOrEditNotePage> createState() => _NewOrEditNotePageState();
@@ -38,10 +36,10 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
   // List ini akan menyimpan semua tag yang pernah dibuat oleh user di aplikasi.
   // Dalam aplikasi nyata, ini akan diambil dari database atau penyimpanan lokal.
   // Untuk tujuan demo, ini adalah data dummy.
-  List<String> _allExistingUserTags = [
+  final List<String> _allExistingUserTags = [
     'Personal Routine', 'Life', 'College', 'Work', 'Health',
     'Finance', 'Travel', 'Ideas', 'Shopping', 'Goals',
-    'Hobby', 'Daily' // Menambahkan contoh tag dari DotTag
+    'Hobby', 'Daily', // Menambahkan contoh tag dari DotTag
   ];
 
   @override
@@ -75,8 +73,18 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
 
   String _getMonthName(int month) {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return months[month - 1];
   }
@@ -84,12 +92,14 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
   void _addTag() async {
     final newTag = await showDialog<String>(
       context: context,
-      builder: (context) => NewTagDialog( // Memanggil NewTagDialog
-        existingTags: _allExistingUserTags, // Mengirim semua tag yang pernah dibuat
+      builder: (context) => NewTagDialog(
+        // Memanggil NewTagDialog
+        existingTags:
+            _allExistingUserTags, // Mengirim semua tag yang pernah dibuat
         currentNoteTags: _tags, // Mengirim tag yang sudah ada di catatan ini
       ),
     );
-    
+
     if (newTag != null && newTag.isNotEmpty && !_tags.contains(newTag)) {
       setState(() {
         _tags.add(newTag);
@@ -110,20 +120,22 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
 
   void _saveNote() {
     final noteData = {
-      'title': _titleController.text.isEmpty ? 'Title here..' : _titleController.text,
+      'title': _titleController.text.isEmpty
+          ? 'Title here..'
+          : _titleController.text,
       'content': _contentController.text,
       'tags': _tags,
       'createdDate': _createdDate,
       'lastModifiedDate': DateTime.now(),
     };
-    
+
     Navigator.pop(context, noteData);
   }
 
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.existingNote != null;
-    
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
@@ -134,7 +146,9 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          isEditing ? 'Edit Note' : 'New Note', // Teks ini akan menampilkan "New Note" jika existingNote null
+          isEditing
+              ? 'Edit Note'
+              : 'New Note', // Teks ini akan menampilkan "New Note" jika existingNote null
           style: const TextStyle(
             color: _primaryBlue, // Warna teks judul AppBar adalah biru
             fontSize: 18,
@@ -144,7 +158,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.book_outlined, color: _primaryBlue),
-            onPressed: widget.isReadOnly ? null : () { },
+            onPressed: widget.isReadOnly ? null : () {},
           ),
           TextButton(
             onPressed: widget.isReadOnly ? null : _saveNote,
@@ -159,7 +173,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
           ),
           IconButton(
             icon: const Icon(Icons.more_horiz, color: _primaryBlue),
-            onPressed: () { },
+            onPressed: () {},
           ),
         ],
       ),
@@ -195,27 +209,21 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                     });
                   },
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Date Information (hanya tampil jika mengedit catatan yang sudah ada)
                 if (isEditing) ...[
                   Row(
                     children: [
                       Text(
                         'Created',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
                       const Spacer(),
                       Text(
                         _formatDate(_createdDate!),
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
                     ],
                   ),
@@ -224,33 +232,24 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                     children: [
                       Text(
                         'Last modified',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
                       const Spacer(),
                       Text(
                         _formatDate(_lastModifiedDate!),
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
                 ],
-                
+
                 // Tags Section
                 Row(
                   children: [
                     Text(
                       'Tags',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
                     ),
                     const SizedBox(width: 8),
                     if (!widget.isReadOnly)
@@ -260,8 +259,13 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                           backgroundColor: _primaryBlue,
                           foregroundColor: Colors.white,
                           minimumSize: Size.zero,
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           elevation: 0,
                         ),
                         child: const Icon(Icons.add, size: 16),
@@ -270,45 +274,50 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                     if (_tags.isEmpty)
                       Text(
                         'No tags added',
-                        style: TextStyle(
-                          color: Colors.grey[500],
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: Colors.grey[500], fontSize: 14),
                       ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 12),
-                
+
                 // Tags Display - MENGGUNAKAN DOTTAG UNTUK WARNA BERDASARKAN KATEGORI
                 if (_tags.isNotEmpty)
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: _tags.map((tag) => DotTag( // Menggunakan DotTag
-                      tag: tag,
-                      // Tombol silang untuk menghapus tag, hanya jika tidak read-only
-                      child: widget.isReadOnly
-                          ? null
-                          : GestureDetector(
-                              onTap: () => _removeTag(tag),
-                              child: Container(
-                                padding: const EdgeInsets.only(left: 6), // Padding ke kiri untuk ikon silang
-                                child: const Icon(
-                                  Icons.close,
-                                  size: 14,
-                                  color: Colors.white, // Ikon silang tetap putih
-                                ),
-                              ),
-                            ),
-                    )).toList(),
+                    children: _tags
+                        .map(
+                          (tag) => DotTag(
+                            // Menggunakan DotTag
+                            tag: tag,
+                            // Tombol silang untuk menghapus tag, hanya jika tidak read-only
+                            child: widget.isReadOnly
+                                ? null
+                                : GestureDetector(
+                                    onTap: () => _removeTag(tag),
+                                    child: Container(
+                                      padding: const EdgeInsets.only(
+                                        left: 6,
+                                      ), // Padding ke kiri untuk ikon silang
+                                      child: const Icon(
+                                        Icons.close,
+                                        size: 14,
+                                        color: Colors
+                                            .white, // Ikon silang tetap putih
+                                      ),
+                                    ),
+                                  ),
+                          ),
+                        )
+                        .toList(),
                   ),
               ],
             ),
           ),
-          
+
           const Divider(height: 1),
-          
+
           // Content Editor
           Expanded(
             child: Container(
@@ -326,8 +335,12 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                         textAlignVertical: TextAlignVertical.top,
                         style: TextStyle(
                           fontSize: 16,
-                          fontWeight: _isBold ? FontWeight.bold : FontWeight.normal,
-                          fontStyle: _isItalic ? FontStyle.italic : FontStyle.normal,
+                          fontWeight: _isBold
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                          fontStyle: _isItalic
+                              ? FontStyle.italic
+                              : FontStyle.normal,
                           decoration: TextDecoration.combine([
                             if (_isUnderline) TextDecoration.underline,
                             if (_isStrikethrough) TextDecoration.lineThrough,
@@ -349,11 +362,14 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                       ),
                     ),
                   ),
-                  
+
                   // Rich Text Toolbar (sesuai desain UI)
                   if (!widget.isReadOnly)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         border: Border(
@@ -365,16 +381,20 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                           IconButton(
                             icon: const Icon(Icons.undo),
                             color: Colors.grey[600],
-                            onPressed: () { /* Implement undo functionality */ },
+                            onPressed: () {
+                              /* Implement undo functionality */
+                            },
                           ),
                           IconButton(
                             icon: const Icon(Icons.redo),
                             color: Colors.grey[600],
-                            onPressed: () { /* Implement redo functionality */ },
+                            onPressed: () {
+                              /* Implement redo functionality */
+                            },
                           ),
-                          
+
                           const SizedBox(width: 8),
-                          
+
                           IconButton(
                             icon: const Icon(Icons.format_bold),
                             color: _isBold ? _primaryBlue : Colors.grey[600],
@@ -395,7 +415,9 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                           ),
                           IconButton(
                             icon: const Icon(Icons.format_underlined),
-                            color: _isUnderline ? _primaryBlue : Colors.grey[600],
+                            color: _isUnderline
+                                ? _primaryBlue
+                                : Colors.grey[600],
                             onPressed: () {
                               setState(() {
                                 _isUnderline = !_isUnderline;
@@ -404,20 +426,24 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                           ),
                           IconButton(
                             icon: const Icon(Icons.format_strikethrough),
-                            color: _isStrikethrough ? _primaryBlue : Colors.grey[600],
+                            color: _isStrikethrough
+                                ? _primaryBlue
+                                : Colors.grey[600],
                             onPressed: () {
                               setState(() {
                                 _isStrikethrough = !_isStrikethrough;
                               });
                             },
                           ),
-                          
+
                           const Spacer(),
-                          
+
                           IconButton(
                             icon: const Icon(Icons.format_list_bulleted),
                             color: Colors.grey[600],
-                            onPressed: () { /* Implement bullet list functionality */ },
+                            onPressed: () {
+                              /* Implement bullet list functionality */
+                            },
                           ),
                         ],
                       ),

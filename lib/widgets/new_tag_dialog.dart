@@ -3,7 +3,6 @@ import 'package:noted_pak/widgets/note_tag.dart'; // Ini mengimpor getDotTagBack
 
 // Definisi warna primer dari LoginPage
 const Color _primaryBlue = Color(0xFF4285F4);
-const Color _lightGreyBackground = Color(0xFFF8F9FA);
 const Color _lightBorderColor = Color(0xFFE9ECEF);
 const Color _darkTextColor = Colors.black87;
 
@@ -12,10 +11,10 @@ class NewTagDialog extends StatefulWidget {
   final List<String> currentNoteTags;
 
   const NewTagDialog({
-    Key? key,
+    super.key,
     required this.existingTags,
     required this.currentNoteTags,
-  }) : super(key: key);
+  });
 
   @override
   State<NewTagDialog> createState() => _NewTagDialogState();
@@ -41,12 +40,16 @@ class _NewTagDialogState extends State<NewTagDialog> {
   void _filterSuggestedTags() {
     final query = _tagController.text.toLowerCase();
     _filteredSuggestedTags = widget.existingTags
-        .where((tag) => 
-            tag.toLowerCase().contains(query) && 
-            !widget.currentNoteTags.contains(tag)
+        .where(
+          (tag) =>
+              tag.toLowerCase().contains(query) &&
+              !widget.currentNoteTags.contains(tag),
         )
-        .toSet().toList(); 
-    _filteredSuggestedTags.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+        .toSet()
+        .toList();
+    _filteredSuggestedTags.sort(
+      (a, b) => a.toLowerCase().compareTo(b.toLowerCase()),
+    );
   }
 
   void _addTag() {
@@ -86,9 +89,7 @@ class _NewTagDialogState extends State<NewTagDialog> {
 
     return Dialog(
       backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Container(
         padding: const EdgeInsets.all(20),
         constraints: BoxConstraints(
@@ -107,18 +108,15 @@ class _NewTagDialogState extends State<NewTagDialog> {
                 color: _darkTextColor,
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             TextField(
               controller: _tagController,
               autofocus: true,
               decoration: InputDecoration(
                 hintText: 'Enter tag name',
-                hintStyle: TextStyle(
-                  color: Colors.grey[400],
-                  fontSize: 16,
-                ),
+                hintStyle: TextStyle(color: Colors.grey[400], fontSize: 16),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: const BorderSide(color: _lightBorderColor),
@@ -141,7 +139,7 @@ class _NewTagDialogState extends State<NewTagDialog> {
                 _addTag();
               },
             ),
-            
+
             if (showSuggestedTagsSection) ...[
               const SizedBox(height: 16),
               Text(
@@ -152,9 +150,9 @@ class _NewTagDialogState extends State<NewTagDialog> {
                   color: Colors.grey[600],
                 ),
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               Flexible(
                 child: SingleChildScrollView(
                   child: Wrap(
@@ -169,7 +167,9 @@ class _NewTagDialogState extends State<NewTagDialog> {
                             vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color: getDotTagBackgroundColor(tag), // Warna sesuai DotTag
+                            color: getDotTagBackgroundColor(
+                              tag,
+                            ), // Warna sesuai DotTag
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Row(
@@ -202,7 +202,7 @@ class _NewTagDialogState extends State<NewTagDialog> {
               ),
               const SizedBox(height: 20),
             ],
-            
+
             // Action Buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -211,22 +211,25 @@ class _NewTagDialogState extends State<NewTagDialog> {
                   onPressed: () => Navigator.of(context).pop(),
                   child: Text(
                     'Cancel',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Colors.grey[600], fontSize: 16),
                   ),
                 ),
-                
+
                 const SizedBox(width: 8),
-                
+
                 ElevatedButton(
-                  onPressed: _tagController.text.trim().isEmpty ? null : _addTag,
+                  onPressed: _tagController.text.trim().isEmpty
+                      ? null
+                      : _addTag,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _primaryBlue, // Warna biru saat aktif
-                    disabledBackgroundColor: _primaryBlue.withOpacity(0.5), // Nuansa biru saat disabled
+                    disabledBackgroundColor: _primaryBlue.withAlpha(
+                      (0.5 * 255).round(),
+                    ),
                     foregroundColor: Colors.white,
-                    disabledForegroundColor: Colors.white.withOpacity(0.7), // Warna teks putih saat disabled
+                    disabledForegroundColor: Colors.white.withAlpha(
+                      (0.7 * 255).round(),
+                    ),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
                       vertical: 12,
@@ -238,10 +241,7 @@ class _NewTagDialogState extends State<NewTagDialog> {
                   ),
                   child: const Text(
                     'Add',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                 ),
               ],

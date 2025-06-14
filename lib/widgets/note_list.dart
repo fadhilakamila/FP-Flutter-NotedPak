@@ -2,14 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../models/note.dart';
 import 'note_card.dart';
 import '../change_notifiers/notes_provider.dart';
 
 class NotesList extends StatelessWidget {
-  const NotesList({
-    super.key,
-  });
+  const NotesList({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +15,10 @@ class NotesList extends StatelessWidget {
         final notes = notesProvider.notes;
         return ListView.builder(
           itemCount: notes.length,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8), // Padding list
+          padding: const EdgeInsets.symmetric(
+            horizontal: 8,
+            vertical: 8,
+          ), // Padding list
           itemBuilder: (context, int index) {
             return NoteCard(
               note: notes[index],

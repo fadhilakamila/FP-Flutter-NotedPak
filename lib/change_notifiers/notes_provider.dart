@@ -74,7 +74,8 @@ class NotesProvider with ChangeNotifier {
       Note(
         id: '7',
         title: 'Tennis',
-        content: 'tenis ku suka tenis\nkami sukanya apa?\naku suka kamu aw\ntenis tenis apa yang\nlucu? tenis sama\nkamu awww',
+        content:
+            'tenis ku suka tenis\nkami sukanya apa?\naku suka kamu aw\ntenis tenis apa yang\nlucu? tenis sama\nkamu awww',
         dateModified: DateTime(2025, 12, 5),
         dateCreated: DateTime(2025, 12, 4),
         type: NoteType.hobby,
@@ -98,8 +99,8 @@ class NotesProvider with ChangeNotifier {
     List<Note> filteredNotes = _allNotes.where((note) {
       final query = _searchTerm.toLowerCase();
       return query.isEmpty ||
-             note.title.toLowerCase().contains(query) ||
-             note.content.toLowerCase().contains(query);
+          note.title.toLowerCase().contains(query) ||
+          note.content.toLowerCase().contains(query);
     }).toList();
 
     // Urutkan catatan yang sudah difilter
@@ -135,7 +136,9 @@ class NotesProvider with ChangeNotifier {
 
   void addNote(Note note) {
     _allNotes.add(note);
-    print('Catatan baru ditambahkan. Jumlah catatan sekarang: ${_allNotes.length}');
+    debugPrint(
+      'Catatan baru ditambahkan. Jumlah catatan sekarang: ${_allNotes.length}',
+    );
     _sortNotes();
     notifyListeners();
   }
@@ -157,7 +160,8 @@ class NotesProvider with ChangeNotifier {
       int comparisonResult = 0;
       if (_orderBy == OrderOption.dateModified) {
         comparisonResult = a.dateModified.compareTo(b.dateModified);
-      } else if (_orderBy == OrderOption.dateCreated) { // PERBAIKI TYPO INI JIKA BELUM
+      } else if (_orderBy == OrderOption.dateCreated) {
+        // PERBAIKI TYPO INI JIKA BELUM
         comparisonResult = a.dateCreated.compareTo(b.dateCreated);
       }
 

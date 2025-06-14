@@ -1,10 +1,8 @@
 // lib/widgets/view_options.dart
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
 import '../change_notifiers/notes_provider.dart';
-import '../core/constants.dart';
 import '../enums/order_option.dart';
 import 'note_icon_button.dart';
 
@@ -20,7 +18,9 @@ class _ViewOptionsState extends State<ViewOptions> {
   Widget build(BuildContext context) {
     return Consumer<NotesProvider>(
       builder: (_, notesProvider, __) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10.0), // Padding sesuai gambar
+        padding: const EdgeInsets.symmetric(
+          horizontal: 10.0,
+        ), // Padding sesuai gambar
         child: Row(
           children: [
             // Icon tanggal untuk pengurutan
@@ -31,8 +31,12 @@ class _ViewOptionsState extends State<ViewOptions> {
             ),
             const SizedBox(width: 8),
             // Dropdown untuk opsi pengurutan
-            Container( // Menambahkan Container untuk latar belakang putih dan border
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), // Padding di dalam kotak
+            Container(
+              // Menambahkan Container untuk latar belakang putih dan border
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ), // Padding di dalam kotak
               decoration: BoxDecoration(
                 color: Colors.white, // Latar belakang putih
                 borderRadius: BorderRadius.circular(10), // Sudut membulat
@@ -57,8 +61,13 @@ class _ViewOptionsState extends State<ViewOptions> {
                       (e) => DropdownMenuItem(
                         value: e,
                         child: Text(
-                          e == OrderOption.dateModified ? 'Date modified' : 'Date created',
-                          style: const TextStyle(fontSize: 14, color: Color(0xFF8A8A8A)),
+                          e == OrderOption.dateModified
+                              ? 'Date modified'
+                              : 'Date created',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF8A8A8A),
+                          ),
                         ),
                       ),
                     )
@@ -76,14 +85,16 @@ class _ViewOptionsState extends State<ViewOptions> {
                   : Icons.arrow_upward,
               size: 16,
               onPressed: () {
-                notesProvider.isDescending = !notesProvider.isDescending; // Toggle isDescending
+                notesProvider.isDescending =
+                    !notesProvider.isDescending; // Toggle isDescending
               },
             ),
             const Spacer(),
             // Ikon grid/list
             NoteIconButton(
               icon: notesProvider.isGrid
-                  ? Icons.grid_view // Ikon grid
+                  ? Icons
+                        .grid_view // Ikon grid
                   : Icons.list, // Ikon list
               size: 20,
               onPressed: () {

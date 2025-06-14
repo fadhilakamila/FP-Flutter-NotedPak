@@ -1,5 +1,4 @@
 // lib/models/note.dart
-import 'package:flutter/material.dart';
 
 enum NoteType { daily, college, work, hobby, life } // Menambahkan enum NoteType
 

@@ -1,15 +1,12 @@
 // lib/widgets/search_field.dart
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
 import '../change_notifiers/notes_provider.dart';
 import '../core/constants.dart'; // Import constants
 
 class SearchField extends StatefulWidget {
-  const SearchField({
-    super.key,
-  });
+  const SearchField({super.key});
 
   @override
   State<SearchField> createState() => _SearchFieldState();
@@ -22,7 +19,8 @@ class _SearchFieldState extends State<SearchField> {
   @override
   void initState() {
     super.initState();
-    notesProvider = context.read<NotesProvider>(); // Menggunakan context.read<NotesProvider>()
+    notesProvider = context
+        .read<NotesProvider>(); // Menggunakan context.read<NotesProvider>()
     searchController = TextEditingController()
       ..addListener(() {
         notesProvider.searchTerm = searchController.text;
@@ -41,8 +39,15 @@ class _SearchFieldState extends State<SearchField> {
       controller: searchController,
       decoration: InputDecoration(
         hintText: 'Search notes...',
-        hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF8A8A8A)), // Sesuaikan warna hint
-        prefixIcon: const Icon(Icons.search, size: 24, color: Color(0xFF8A8A8A)), // Mengganti ikon dan menyesuaikan ukuran/warna
+        hintStyle: const TextStyle(
+          fontSize: 14,
+          color: Color(0xFF8A8A8A),
+        ), // Sesuaikan warna hint
+        prefixIcon: const Icon(
+          Icons.search,
+          size: 24,
+          color: Color(0xFF8A8A8A),
+        ), // Mengganti ikon dan menyesuaikan ukuran/warna
         suffixIcon: ListenableBuilder(
           listenable: searchController,
           builder: (context, clearButton) => searchController.text.isNotEmpty
@@ -52,15 +57,23 @@ class _SearchFieldState extends State<SearchField> {
             onTap: () {
               searchController.clear();
             },
-            child: const Icon(Icons.clear, color: Color(0xFF8A8A8A)), // Mengganti ikon dan menyesuaikan warna
+            child: const Icon(
+              Icons.clear,
+              color: Color(0xFF8A8A8A),
+            ), // Mengganti ikon dan menyesuaikan warna
           ),
         ),
         fillColor: Colors.white, // Sesuai gambar
         filled: true,
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10), // Sesuaikan padding
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 12,
+          horizontal: 10,
+        ), // Sesuaikan padding
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10), // Radius lebih kecil dari gambar
+          borderRadius: BorderRadius.circular(
+            10,
+          ), // Radius lebih kecil dari gambar
           borderSide: const BorderSide(
             color: Color(0xFFE0E0E0), // Warna border abu-abu muda
             width: 1.0,

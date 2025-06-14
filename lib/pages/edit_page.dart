@@ -5,7 +5,6 @@ import 'package:noted_pak/widgets/confirmation_dialog.dart';
 
 // Definisi warna primer dan lainnya yang konsisten dengan LoginPage
 const Color _primaryBlue = Color(0xFF4285F4);
-const Color _lightGreyBackground = Color(0xFFF8F9FA);
 const Color _lightBorderColor = Color(0xFFE9ECEF);
 
 class NewOrEditNotePage extends StatefulWidget {
@@ -13,10 +12,10 @@ class NewOrEditNotePage extends StatefulWidget {
   final bool isReadOnly; // Ini adalah override keras untuk mode read-only
 
   const NewOrEditNotePage({
-    Key? key,
+    super.key,
     this.existingNote,
     this.isReadOnly = false,
-  }) : super(key: key);
+  });
 
   @override
   State<NewOrEditNotePage> createState() => _NewOrEditNotePageState();
@@ -38,7 +37,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
   bool _isUnderline = false;
   bool _isStrikethrough = false;
 
-  List<String> _allExistingUserTags = [
+  final List<String> _allExistingUserTags = [
     'Personal Routine',
     'Life',
     'College',
@@ -180,6 +179,9 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
 
     if (confirmed != null && confirmed) {
       // Logika penyimpanan yang sebenarnya hanya dijalankan jika dikonfirmasi
+      if (!mounted) return;
+      Navigator.pop(context, noteData);
+
       Navigator.pop(
         context,
         noteData,
@@ -205,7 +207,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
       // Variabel hasil diganti jadi 'confirmed'
       if (confirmed != null && confirmed) {
         // Pastikan tidak null dan true
-        print("Note deleted!");
+        if (!mounted) return;
         Navigator.pop(
           context,
         ); // Kembali dari NewOrEditNotePage setelah menghapus
@@ -218,7 +220,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
     // Tentukan apakah catatan ini adalah catatan baru (belum pernah disimpan)
     final isNewNote = widget.existingNote == null;
     // Tentukan apakah input field harus read-only (berdasarkan mode atau override isReadOnly)
-    final bool _isInputReadOnly = !_isEditingMode || widget.isReadOnly;
+    final bool isInputReadOnly = !_isEditingMode || widget.isReadOnly;
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -313,7 +315,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                 TextField(
                   controller: _titleController,
                   readOnly:
-                      _isInputReadOnly, // readOnly berdasarkan _isInputReadOnly
+                      isInputReadOnly, // readOnly berdasarkan isInputReadOnly
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -401,7 +403,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                       ),
                     const Spacer(),
                     if (_tags.isEmpty &&
-                        _isInputReadOnly) // "No tags added" hanya di view mode
+                        isInputReadOnly) // "No tags added" hanya di view mode
                       Text(
                         'No tags added',
                         style: TextStyle(color: Colors.grey[500], fontSize: 14),
@@ -458,7 +460,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                       child: TextField(
                         controller: _contentController,
                         readOnly:
-                            _isInputReadOnly, // readOnly berdasarkan _isInputReadOnly
+                            isInputReadOnly, // readOnly berdasarkan isInputReadOnly
                         maxLines: null,
                         expands: true,
                         textAlignVertical: TextAlignVertical.top,
@@ -596,3 +598,5 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
     super.dispose();
   }
 }
+
+/* Removed erroneous _isInputReadOnly class */

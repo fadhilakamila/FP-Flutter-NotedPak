@@ -2,14 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../models/note.dart';
 import 'note_card.dart';
 import '../change_notifiers/notes_provider.dart'; // Import NotesProvider
 
 class NotesGrid extends StatelessWidget {
-  const NotesGrid({
-    super.key,
-  });
+  const NotesGrid({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -19,12 +16,16 @@ class NotesGrid extends StatelessWidget {
         return GridView.builder(
           itemCount: notes.length,
           clipBehavior: Clip.none,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), // Padding grid
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 8,
+          ), // Padding grid
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
             crossAxisSpacing: 16, // Jarak antar kolom
             mainAxisSpacing: 16, // Jarak antar baris
-            childAspectRatio: 0.7, // Sesuaikan rasio aspek kartu agar sesuai gambar
+            childAspectRatio:
+                0.7, // Sesuaikan rasio aspek kartu agar sesuai gambar
           ),
           itemBuilder: (context, int index) {
             return NoteCard(

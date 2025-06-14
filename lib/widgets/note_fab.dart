@@ -1,14 +1,10 @@
 // lib/widgets/note_fab.dart
 import 'package:flutter/material.dart';
-import '../core/constants.dart'; // Import constants untuk warna
 
 class NoteFab extends StatelessWidget {
   final VoidCallback onPressed;
 
-  const NoteFab({
-    Key? key,
-    required this.onPressed,
-  }) : super(key: key);
+  const NoteFab({super.key, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -16,11 +12,13 @@ class NoteFab extends StatelessWidget {
       width: 60,
       height: 60,
       decoration: BoxDecoration(
-        color: const Color(0xFF5B9BD5), // Menggunakan warna dari constants jika ada
+        color: const Color(
+          0xFF5B9BD5,
+        ), // Menggunakan warna dari constants jika ada
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
+            color: Colors.black.withAlpha((0.15 * 255).round()),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
