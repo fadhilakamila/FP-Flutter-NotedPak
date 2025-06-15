@@ -1,6 +1,12 @@
+// lib/pages/edit_page.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart'; // Tambahkan import ini
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart'; // Tambahkan import ini
+import 'package:permission_handler/permission_handler.dart'; // Tambahkan import ini
+import 'package:noted_pak/pages/camera_screen.dart'; // Tambahkan import ini
+
 import 'package:noted_pak/widgets/new_tag_dialog.dart';
 import 'package:noted_pak/widgets/note_tag.dart';
 import 'package:noted_pak/widgets/confirmation_dialog.dart';
@@ -13,11 +19,13 @@ const Color _lightBorderColor = Color(0xFFE9ECEF);
 class NewOrEditNotePage extends StatefulWidget {
   final Map<String, dynamic>? existingNote;
   final bool isReadOnly;
+  final String? initialContent;
 
   const NewOrEditNotePage({
     super.key,
     this.existingNote,
     this.isReadOnly = false,
+    this.initialContent,
   });
 
   @override
@@ -32,6 +40,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
   DateTime? _dateModified;
 
   late bool _isEditingMode;
+  bool _isOcrProcessing = false; // Tambahkan state untuk loading OCR
 
   bool _isBold = false;
   bool _isItalic = false;
@@ -49,6 +58,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
     super.initState();
     _initializeControllers();
     _loadExistingNote();
+    _setInitialContent();
 
     if (widget.isReadOnly) {
       _isEditingMode = false;
@@ -69,11 +79,10 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
       _titleController.text = widget.existingNote!['title'] ?? '';
       _contentController.text = widget.existingNote!['content'] ?? '';
       _tags = List<String>.from(widget.existingNote!['tags'] ?? []);
-      
-      // Menggunakan kunci yang sesuai dengan model Note, dan _parseDate sudah menangani null.
+
       _dateCreated = _parseDate(widget.existingNote!['dateCreated']);
       _dateModified = _parseDate(widget.existingNote!['dateModified']);
-      
+
       for (var tag in _tags) {
         if (!_allExistingUserTags.contains(tag)) {
           _allExistingUserTags.add(tag);
@@ -85,6 +94,16 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
     }
   }
 
+  void _setInitialContent() {
+    if (widget.initialContent != null && widget.initialContent!.isNotEmpty) {
+      _contentController.text = widget.initialContent!;
+      // Judul TETAP KOSONG, biarkan user mengisi sendiri
+      // if (_titleController.text.isEmpty) {
+      //   _titleController.text = 'New Scanned Note';
+      // }
+    }
+  }
+
   DateTime? _parseDate(dynamic date) {
     if (date is DateTime) {
       return date;
@@ -93,12 +112,14 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
     } else if (date is Timestamp) {
       return date.toDate();
     }
-    return null; // Jika input adalah null, atau tipe lain yang tidak diharapkan, kembalikan null
+    return null;
   }
 
   String _formatDate(DateTime date) {
-return "${date.day} ${_getMonthName(date.month)} ${date.year}, ${date.hour.toString().padLeft(2, '0')}.${date.minute.toString().padLeft(2, '0')} ${date.hour >= 12 ? 'PM' : 'AM'}";  }
+    return "${date.day} ${_getMonthName(date.month)} ${date.year}, ${date.hour.toString().padLeft(2, '0')}.${date.minute.toString().padLeft(2, '0')} ${date.hour >= 12 ? 'PM' : 'AM'}";
+  }
 
+  // Pastikan fungsi _getMonthName ada di sini, di dalam _NewOrEditNotePageState
   String _getMonthName(int month) {
     const months = [
       'January', 'February', 'March', 'April', 'May', 'June',
@@ -150,7 +171,7 @@ return "${date.day} ${_getMonthName(date.month)} ${date.year}, ${date.hour.toStr
 
     if (confirmed != null && confirmed) {
       if (!mounted) return;
-      
+
       final notesProvider = Provider.of<NotesProvider>(context, listen: false);
 
       Note newOrUpdatedNote = Note(
@@ -160,7 +181,6 @@ return "${date.day} ${_getMonthName(date.month)} ${date.year}, ${date.hour.toStr
         tags: _tags,
         dateCreated: _dateCreated ?? DateTime.now(),
         dateModified: DateTime.now(),
-        // Menghapus type: NoteType.daily,
       );
 
       if (newOrUpdatedNote.id == null) {
@@ -190,7 +210,7 @@ return "${date.day} ${_getMonthName(date.month)} ${date.year}, ${date.hour.toStr
     ).then((confirmed) async {
       if (confirmed != null && confirmed) {
         if (!mounted) return;
-        
+
         if (widget.existingNote != null && widget.existingNote!['id'] != null) {
           final notesProvider = Provider.of<NotesProvider>(context, listen: false);
           String noteIdToDelete = widget.existingNote!['id'];
@@ -199,13 +219,184 @@ return "${date.day} ${_getMonthName(date.month)} ${date.year}, ${date.hour.toStr
           print("Note deleted from Firebase!");
 
           Navigator.of(context).pop();
-          Navigator.of(context).pop(); 
+          Navigator.of(context).pop();
         } else {
           print("Cannot delete: Note has no ID.");
         }
       }
     });
   }
+
+  // Fungsi untuk menampilkan opsi OCR (Camera / Gallery) di dalam Edit Page
+  void _showOcrOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext bc) {
+        return SafeArea(
+          child: Wrap(
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Scan using Camera'),
+                onTap: () async {
+                  Navigator.pop(bc); // Tutup bottom sheet
+                  await _scanUsingCamera();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.image),
+                title: const Text('Pick from Gallery'),
+                onTap: () async {
+                  Navigator.pop(bc); // Tutup bottom sheet
+                  await _pickFromGalleryAndRecognizeText();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // Fungsi untuk memindai menggunakan kamera
+  Future<void> _scanUsingCamera() async {
+    if (_isOcrProcessing) return;
+
+    setState(() { _isOcrProcessing = true; }); // Show loading
+
+    // Request camera permission
+    var status = await Permission.camera.request();
+    if (status.isDenied) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Camera permission denied.')),
+        );
+      }
+      setState(() { _isOcrProcessing = false; });
+      return;
+    }
+    if (status.isPermanentlyDenied) {
+       if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Camera permission permanently denied. Please enable from app settings.'),
+            action: SnackBarAction(label: 'Settings', onPressed: openAppSettings),
+          ),
+        );
+      }
+      setState(() { _isOcrProcessing = false; });
+      return;
+    }
+
+    try {
+      final String? extractedText = await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const CameraScreen()),
+      );
+
+      if (!mounted) return;
+
+      if (extractedText != null && extractedText.isNotEmpty) {
+        setState(() {
+          _contentController.text = extractedText;
+          _dateModified = DateTime.now();
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Text extracted successfully!')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No text extracted or scan cancelled.')),
+        );
+      }
+    } catch (e) {
+      print('Error during camera scan OCR: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to scan from camera: $e')),
+        );
+      }
+    } finally {
+      setState(() { _isOcrProcessing = false; }); // Hide loading
+    }
+  }
+
+  // Fungsi untuk memilih dari galeri dan mengenali teks
+  Future<void> _pickFromGalleryAndRecognizeText() async {
+    if (_isOcrProcessing) return;
+
+    setState(() { _isOcrProcessing = true; }); // Show loading
+
+    // Request storage permission
+    var status = await Permission.storage.request(); // For Android < 13
+    if (status.isDenied) {
+      status = await Permission.photos.request(); // For Android >= 13 & iOS photos
+    }
+
+    if (status.isDenied) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Storage/Photos permission denied.')),
+        );
+      }
+      setState(() { _isOcrProcessing = false; });
+      return;
+    }
+     if (status.isPermanentlyDenied) {
+       if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Storage/Photos permission permanently denied. Please enable from app settings.'),
+            action: SnackBarAction(label: 'Settings', onPressed: openAppSettings),
+          ),
+        );
+      }
+      setState(() { _isOcrProcessing = false; });
+      return;
+    }
+
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+      if (!mounted) return;
+
+      if (image != null) {
+        final TextRecognizer textRecognizer = TextRecognizer();
+        final InputImage inputImage = InputImage.fromFilePath(image.path);
+        final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
+        textRecognizer.close();
+
+        if (recognizedText.text.isNotEmpty) {
+          setState(() {
+            _contentController.text = recognizedText.text;
+            _dateModified = DateTime.now();
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Text extracted successfully!')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No text found in the selected image.')),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No image selected.')),
+        );
+      }
+    } catch (e) {
+      print('Error during gallery OCR: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to pick image from gallery: $e')),
+        );
+      }
+    } finally {
+      setState(() { _isOcrProcessing = false; }); // Hide loading
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -232,6 +423,19 @@ return "${date.day} ${_getMonthName(date.month)} ${date.year}, ${date.hour.toStr
           ),
         ),
         actions: [
+          // Tombol OCR Scanner
+          if (_isEditingMode && !widget.isReadOnly) // Hanya muncul saat mode edit
+            _isOcrProcessing
+                ? const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: CircularProgressIndicator(color: _primaryBlue),
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.document_scanner, color: _primaryBlue),
+                    onPressed: _showOcrOptions, // Memanggil opsi OCR
+                  ),
+
+          // Tombol Done/Edit
           if (!isNewNote && !_isEditingMode && !widget.isReadOnly)
             TextButton(
               onPressed: () {
@@ -249,7 +453,7 @@ return "${date.day} ${_getMonthName(date.month)} ${date.year}, ${date.hour.toStr
                 ),
               ),
             ),
-          
+
           if (_isEditingMode && !widget.isReadOnly)
             TextButton(
               onPressed: _saveNote,
@@ -262,7 +466,8 @@ return "${date.day} ${_getMonthName(date.month)} ${date.year}, ${date.hour.toStr
                 ),
               ),
             ),
-          
+
+          // Tombol More (dengan Delete Note)
           if (!isNewNote && _isEditingMode && !widget.isReadOnly)
             PopupMenuButton<String>(
               onSelected: (value) {
@@ -288,6 +493,7 @@ return "${date.day} ${_getMonthName(date.month)} ${date.year}, ${date.hour.toStr
       ),
       body: Column(
         children: [
+          // ... (Sisa Body tetap sama) ...
           // Title Section
           Container(
             color: Colors.white,
@@ -320,10 +526,9 @@ return "${date.day} ${_getMonthName(date.month)} ${date.year}, ${date.hour.toStr
                     }
                   },
                 ),
-                
+
                 const SizedBox(height: 16),
-                
-                // Info Created & Last Modified hanya tampil jika ini catatan yang sudah ada
+
                 if (!isNewNote) ...[
                   Row(
                     children: [
@@ -332,9 +537,8 @@ return "${date.day} ${_getMonthName(date.month)} ${date.year}, ${date.hour.toStr
                         style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
                       const Spacer(),
-                      // <<<--- PERBAIKAN: Gunakan null-aware operator di sini
                       Text(
-                        _formatDate(_dateCreated ?? DateTime.now()), // Menggunakan _dateCreated dengan fallback
+                        _formatDate(_dateCreated ?? DateTime.now()),
                         style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
                     ],
@@ -347,9 +551,8 @@ return "${date.day} ${_getMonthName(date.month)} ${date.year}, ${date.hour.toStr
                         style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
                       const Spacer(),
-                      // <<<--- PERBAIKAN: Gunakan null-aware operator di sini
                       Text(
-                        _formatDate(_dateModified ?? DateTime.now()), // Menggunakan _dateModified dengan fallback
+                        _formatDate(_dateModified ?? DateTime.now()),
                         style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
                     ],
@@ -390,10 +593,9 @@ return "${date.day} ${_getMonthName(date.month)} ${date.year}, ${date.hour.toStr
                       ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 12),
-                
-                // Tags Display
+
                 if (_tags.isNotEmpty)
                   Wrap(
                     spacing: 8,
@@ -423,9 +625,9 @@ return "${date.day} ${_getMonthName(date.month)} ${date.year}, ${date.hour.toStr
               ],
             ),
           ),
-          
+
           const Divider(height: 1),
-          
+
           // Content Editor
           Expanded(
             child: Container(
@@ -468,7 +670,7 @@ return "${date.day} ${_getMonthName(date.month)} ${date.year}, ${date.hour.toStr
                       ),
                     ),
                   ),
-                  
+
                   // Rich Text Toolbar
                   if (_isEditingMode && !widget.isReadOnly)
                     Container(
@@ -494,9 +696,9 @@ return "${date.day} ${_getMonthName(date.month)} ${date.year}, ${date.hour.toStr
                             color: Colors.grey[600],
                             onPressed: () { /* Implement redo functionality */ },
                           ),
-                          
+
                           const SizedBox(width: 8),
-                          
+
                           IconButton(
                             icon: const Icon(Icons.format_bold),
                             color: _isBold ? _primaryBlue : Colors.grey[600],
@@ -533,9 +735,9 @@ return "${date.day} ${_getMonthName(date.month)} ${date.year}, ${date.hour.toStr
                               });
                             },
                           ),
-                          
+
                           const Spacer(),
-                          
+
                           IconButton(
                             icon: const Icon(Icons.format_list_bulleted),
                             color: Colors.grey[600],

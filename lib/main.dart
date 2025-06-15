@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:noted_pak/change_notifiers/notes_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:noted_pak/firebase_options.dart';
+import 'package:camera/camera.dart';
 
 import 'package:noted_pak/pages/main_page.dart';
 import 'package:noted_pak/pages/registration_page.dart';
@@ -11,9 +11,23 @@ import 'package:noted_pak/pages/recover_password_page.dart';
 import 'package:noted_pak/pages/edit_page.dart';
 
 import 'package:noted_pak/models/note.dart';
+import 'package:noted_pak/change_notifiers/notes_provider.dart';
+
+List<CameraDescription> cameras = [];
 
 void main() async {
-  await initializeFirebase();
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  try {
+    cameras = await availableCameras();
+    if (cameras.isEmpty) {
+      print('Warning: No cameras found on this device.');
+    }
+  } on CameraException catch (e) {
+    print('Error initializing cameras: ${e.description}');
+  }
+
   runApp(const MyApp());
 }
 
@@ -27,20 +41,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Map<String, dynamic> dummyExistingNote = {
-      'id': 'ID_CATATAN_YANG_ADA_DI_FIRESTORE_ANDA', // <<<--- GANTI DENGAN ID ASLI DARI FIRESTORE
-      'title': 'Pengeluaran Hari Ini (Updated)',
-      'content': 'Bakso 20.000\nBioskop 35.000\nEs Teh 5.000',
-      'tags': ['Finance', 'Hemat', 'Daily'],
-      'dateCreated': DateTime(2025, 1, 29, 3, 30), // Kirim sebagai DateTime
-      'dateModified': DateTime(2025, 8, 10, 10, 30), // Kirim sebagai DateTime
-      // 'type': NoteType.daily.toString().split('.').last,
-    };
-
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => NotesProvider()),
-        // Tambahkan provider lain di sini jika ada (misal: AuthProvider)
       ],
       child: MaterialApp(
         title: 'NotedPak App',
@@ -48,7 +51,6 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
 
         initialRoute: '/register',
-        // Anda bisa ubah ke '/login' setelah testing CRUD Firebase selesai.
 
         routes: {
           '/register': (context) => const RegistrationPage(),
@@ -61,20 +63,19 @@ class MyApp extends StatelessWidget {
               ),
 
           '/edit_note': (context) {
-            final args =
-                ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+            final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
             return NewOrEditNotePage(
               existingNote: args?['existingNote'],
               isReadOnly: args?['isReadOnly'] ?? false,
+              initialContent: args?['initialContent'] as String?, // Pastikan ini ditambahkan
             );
           },
 
           '/new_note': (context) {
-            return const NewOrEditNotePage();
-          },
-
-          '/edit_note_direct': (context) {
-            return NewOrEditNotePage(existingNote: dummyExistingNote);
+            final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?; // Tangani argumen
+            return NewOrEditNotePage(
+              initialContent: args?['initialContent'] as String?, // Teruskan initialContent
+            );
           },
         },
       ),

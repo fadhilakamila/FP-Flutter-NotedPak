@@ -1,6 +1,5 @@
 // lib/pages/main_page.dart
 import 'package:flutter/material.dart';
-import 'package:noted_pak/widgets/note_fab.dart';
 import 'package:provider/provider.dart';
 
 // Import komponen-komponen baru
@@ -8,6 +7,7 @@ import '../widgets/search_field.dart';
 import '../widgets/view_options.dart';
 import '../widgets/note_grid.dart';
 import '../widgets/note_list.dart';
+import '../widgets/note_fab.dart';
 
 import '../models/note.dart';
 import '../change_notifiers/notes_provider.dart';
@@ -183,7 +183,7 @@ class NotedPakHomePage extends StatelessWidget {
           ),
           floatingActionButton: NoteFab(
             onPressed: () {
-              _showAddNoteDialog(context);
+              _showAddNoteDialog(context); // Langsung ke halaman new note
             },
           ),
         );
@@ -195,18 +195,8 @@ class NotedPakHomePage extends StatelessWidget {
     if (noteData != null) {
       final notesProvider = Provider.of<NotesProvider>(context, listen: false);
 
-      // NoteType noteType;
-      // try {
-      //   noteType = NoteType.values.firstWhere(
-      //     (e) => e.toString().split('.').last == noteData['type'],
-      //     orElse: () => NoteType.daily,
-      //   );
-      // } catch (e) {
-      //   noteType = NoteType.daily;
-      // }
-
-      DateTime createdDate = noteData['dateCreated'] is DateTime 
-          ? noteData['dateCreated'] 
+      DateTime createdDate = noteData['dateCreated'] is DateTime
+          ? noteData['dateCreated']
           : DateTime.parse(noteData['dateCreated']);
       DateTime lastModifiedDate = noteData['dateModified'] is DateTime
           ? noteData['dateModified']
@@ -214,13 +204,12 @@ class NotedPakHomePage extends StatelessWidget {
 
 
       Note newOrUpdatedNote = Note(
-        id: noteData['id'] as String?, // Memastikan id adalah String atau null
+        id: noteData['id'] as String?,
         title: noteData['title'],
         content: noteData['content'],
         tags: List<String>.from(noteData['tags'] ?? []),
         dateCreated: createdDate,
         dateModified: lastModifiedDate,
-        // Menghapus type: noteType,
       );
 
       if (notesProvider.notes.any((n) => n.id == newOrUpdatedNote.id)) {
@@ -230,6 +219,12 @@ class NotedPakHomePage extends StatelessWidget {
       }
     }
   }
+
+  // Hapus _showFabOptions dan _showOcrOptions dari sini
+  // void _showFabOptions(BuildContext context) { ... }
+  // void _showOcrOptions(BuildContext context) { ... }
+  // void _navigateToNewNoteWithContent(BuildContext context, String content) async { ... }
+
 
   void _showAddNoteDialog(BuildContext context) async {
     final result = await Navigator.pushNamed(context, '/new_note');
