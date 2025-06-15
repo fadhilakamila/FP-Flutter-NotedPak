@@ -322,80 +322,153 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
   }
 
   // Fungsi untuk memilih dari galeri dan mengenali teks
-  Future<void> _pickFromGalleryAndRecognizeText() async {
-    if (_isOcrProcessing) return;
+  Future<String?> _pickFromGalleryAndRecognizeText() async {
+  print('DEBUG OCR: _pickFromGalleryAndRecognizeText called.');
+  if (_isOcrProcessing) {
+    print('DEBUG OCR: Already processing. Exiting.');
+    return null;
+  }
 
-    setState(() { _isOcrProcessing = true; }); // Show loading
+  setState(() { _isOcrProcessing = true; }); // Tampilkan loading indicator
 
-    // Request storage permission
-    var status = await Permission.storage.request(); // For Android < 13
-    if (status.isDenied) {
-      status = await Permission.photos.request(); // For Android >= 13 & iOS photos
-    }
+  // === LANGKAH 1: PERMINTAAN IZIN ===
+  PermissionStatus status;
+  print('DEBUG OCR: Requesting Permission.photos...');
+  status = await Permission.photos.request();
+  print('DEBUG OCR: Permission.photos status: $status');
 
-    if (status.isDenied) {
+  if (status.isGranted) {
+    print('DEBUG OCR: Permission GRANTED.');
+    // === LANGKAH 2: PILIH GAMBAR DARI GALERI ===
+    final ImagePicker picker = ImagePicker();
+    XFile? image;
+    try {
+      print('DEBUG OCR: Calling picker.pickImage from gallery...');
+      image = await picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        print('DEBUG OCR: Image selected: ${image.path}');
+      } else {
+        print('DEBUG OCR: Image selection cancelled by user.');
+      }
+    } catch (e) {
+      print('DEBUG OCR: Error picking image: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Storage/Photos permission denied.')),
+          SnackBar(content: Text('Error picking image: $e')),
         );
       }
-      setState(() { _isOcrProcessing = false; });
-      return;
-    }
-     if (status.isPermanentlyDenied) {
-       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Storage/Photos permission permanently denied. Please enable from app settings.'),
-            action: SnackBarAction(label: 'Settings', onPressed: openAppSettings),
-          ),
-        );
-      }
-      setState(() { _isOcrProcessing = false; });
-      return;
+      return null; // Keluar jika ada error saat memilih gambar
     }
 
-    try {
-      final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      // === LANGKAH 3: PROSES GAMBAR DENGAN ML KIT ===
+      BuildContext? loadingDialogContext;
 
-      if (!mounted) return;
-
-      if (image != null) {
+      try {
+        print('DEBUG OCR: Initializing TextRecognizer...');
         final TextRecognizer textRecognizer = TextRecognizer();
+        print('DEBUG OCR: Creating InputImage from file...');
         final InputImage inputImage = InputImage.fromFilePath(image.path);
+
+        // Tampilkan dialog loading saat memproses
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext ctx) { 
+            loadingDialogContext = ctx; // Simpan context dialog untuk ditutup nanti
+            return const AlertDialog(
+              content: Row(
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(width: 20),
+                  Text("Processing image..."),
+                ],
+              ),
+            );
+          },
+        );
+
+        print('DEBUG OCR: Calling textRecognizer.processImage...');
         final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
-        textRecognizer.close();
+        print('DEBUG OCR: Text recognition completed.');
+
+        // Pastikan dialog tertutup HANYA jika memang terbuka dan mounted
+        if (loadingDialogContext != null && loadingDialogContext!.mounted && Navigator.of(loadingDialogContext!).canPop()) {
+          Navigator.of(loadingDialogContext!).pop(); // <--- GUNAKAN context yang disimpan
+        }
+        textRecognizer.close(); // Penting: selalu tutup recognizer setelah selesai
 
         if (recognizedText.text.isNotEmpty) {
-          setState(() {
-            _contentController.text = recognizedText.text;
-            _dateModified = DateTime.now();
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Text extracted successfully!')),
-          );
+          print('DEBUG OCR: Text extracted. Length: ${recognizedText.text.length}');
+          if (mounted) { // Pastikan mounted sebelum setState dan SnackBar
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Text extracted successfully!')),
+            );
+          }
+          return recognizedText.text; // Kembalikan teks yang diekstrak
         } else {
+          print('DEBUG OCR: No text found in the selected image.');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('No text found in the selected image.')),
+            );
+          }
+          return ''; // Kembalikan string kosong jika tidak ada teks
+        }
+      } catch (e) {
+        print('DEBUG OCR: Error during ML Kit processing: $e');
+        if (mounted) {
+          // Pastikan dialog loading ditutup jika ada error saat ML Kit
+          if (Navigator.of(context).canPop()) { // Cek apakah ada dialog yang bisa dipop
+             Navigator.of(context).pop();
+          }
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No text found in the selected image.')),
+            SnackBar(content: Text('Failed to process image for text: $e')),
           );
         }
-      } else {
+        return null; // Kembalikan null jika ada error
+      } finally {
+        // Blok finally ini akan dijalankan terlepas dari ada/tidaknya error di try/catch di atasnya
+        // Pastikan _isOcrProcessing di-reset di sini
+        setState(() { _isOcrProcessing = false; }); // Sembunyikan loading indicator utama
+        // textRecognizer.close() sudah dipanggil di dalam try/catch
+      }
+    } else {
+      print('DEBUG OCR: No image selected by user.');
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No image selected.')),
         );
       }
-    } catch (e) {
-      print('Error during gallery OCR: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to pick image from gallery: $e')),
-        );
-      }
-    } finally {
-      setState(() { _isOcrProcessing = false; }); // Hide loading
+      return null; // Kembalikan null jika tidak ada gambar dipilih
+    }
+  } else if (status.isDenied) {
+    print('DEBUG OCR: Permission DENIED by user. Showing SnackBar.');
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Storage/Photos permission denied.')),
+      );
+    }
+  } else if (status.isPermanentlyDenied) {
+    print('DEBUG OCR: Permission PERMANENTLY DENIED by user. Prompting settings.');
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Storage/Photos permission permanently denied. Please enable from app settings.'),
+          action: SnackBarAction(label: 'Settings', onPressed: openAppSettings),
+        ),
+      );
+    }
+  } else {
+    print('DEBUG OCR: Unknown permission status: $status');
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Unknown permission status: $status')),
+      );
     }
   }
+  return null; // Default return null jika izin tidak diberikan atau ada masalah awal
+}
 
 
   @override
