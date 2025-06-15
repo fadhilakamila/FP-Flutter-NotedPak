@@ -2,7 +2,10 @@
 
 import 'package:flutter/material.dart';
 import 'login_page.dart';
-import 'package:noted_pak/widgets/message_dialog.dart'; // <--- TAMBAHKAN IMPORT INI
+import 'package:noted_pak/widgets/message_dialog.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:noted_pak/services/auth_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class RegistrationPage extends StatefulWidget {
   // ignore: use_super_parameters
@@ -212,11 +215,37 @@ class _RegistrationPageState extends State<RegistrationPage> {
       width: double.infinity,
       height: 52,
       child: ElevatedButton(
-        onPressed: () {
+        onPressed: () async {
           if (_formKey.currentState?.validate() ?? false) {
-            _showEmailVerificationDialog();
+            try {
+              await AuthService().registerWithEmail(
+                email: _emailController.text.trim(),
+                password: _passwordController.text.trim(),
+              );
+
+              // Simpan data profil (opsional)
+              final user = FirebaseAuth.instance.currentUser;
+              if (user != null) {
+                await FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(user.uid)
+                    .set({
+                      'fullName': _fullNameController.text.trim(),
+                      'email': _emailController.text.trim(),
+                      'createdAt': Timestamp.now(),
+                    });
+
+                await user.sendEmailVerification(); // kirim email verifikasi
+                _showEmailVerificationDialog();
+              }
+            } on FirebaseAuthException catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(e.message ?? 'Registration error')),
+              );
+            }
           }
         },
+
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF4285F4),
           foregroundColor: Colors.white,
@@ -272,7 +301,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
         builder: (BuildContext context) {
           return MessageDialog(
             title: 'Verify Email',
-            content: 'We have sent an email verification to your email address.',
+            content:
+                'We have sent an email verification to your email address.',
             buttonText: 'OK',
             buttonColor: const Color(0xFF4285F4),
             onButtonPressed: () {

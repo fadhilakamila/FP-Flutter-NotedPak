@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'registration_page.dart';
 import 'recover_password_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:noted_pak/services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -80,8 +82,8 @@ class LoginPageState extends State<LoginPage> {
         children: [
           _buildTextField(
             controller: _usernameController,
-            labelText: 'Username',
-            icon: Icons.person_outline,
+            labelText: 'Email Address',
+            icon: Icons.email_outlined,
           ),
           const SizedBox(height: 16),
           _buildPasswordField(),
@@ -220,18 +222,50 @@ class LoginPageState extends State<LoginPage> {
       width: double.infinity,
       height: 52,
       child: ElevatedButton(
-        onPressed: () {
+        onPressed: () async {
           if (_formKey.currentState?.validate() ?? false) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Sign in successful!'),
-                backgroundColor: Colors.green,
-              ),
-            );
+            try {
+              final email = _usernameController.text.trim();
+              final password = _passwordController.text.trim();
 
-            Navigator.pushReplacementNamed(context, '/home');
+              final userCredential = await AuthService().signInWithEmail(
+                email: email,
+                password: password,
+              );
+
+              // Cek verifikasi email (optional tapi disarankan)
+              if (!userCredential.user!.emailVerified) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Please verify your email before logging in.',
+                    ),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+                return;
+              }
+
+              // Jika sukses dan email sudah diverifikasi
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Sign in successful!'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+
+              Navigator.pushReplacementNamed(context, '/home');
+            } on FirebaseAuthException catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(e.message ?? 'Login failed'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
           }
         },
+
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF4285F4),
           foregroundColor: Colors.white,

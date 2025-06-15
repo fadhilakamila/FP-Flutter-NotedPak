@@ -1,6 +1,8 @@
 // lib/pages/main_page.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import '../main.dart';
 
 // Import komponen-komponen baru
 import '../widgets/search_field.dart';
@@ -11,6 +13,12 @@ import '../widgets/note_fab.dart';
 
 import '../models/note.dart';
 import '../change_notifiers/notes_provider.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(const MyApp());
+}
 
 // Custom painter tetap sama
 class NotedPakIconPainter extends CustomPainter {
@@ -202,7 +210,6 @@ class NotedPakHomePage extends StatelessWidget {
           ? noteData['dateModified']
           : DateTime.parse(noteData['dateModified']);
 
-
       Note newOrUpdatedNote = Note(
         id: noteData['id'] as String?,
         title: noteData['title'],
@@ -224,7 +231,6 @@ class NotedPakHomePage extends StatelessWidget {
   // void _showFabOptions(BuildContext context) { ... }
   // void _showOcrOptions(BuildContext context) { ... }
   // void _navigateToNewNoteWithContent(BuildContext context, String content) async { ... }
-
 
   void _showAddNoteDialog(BuildContext context) async {
     final result = await Navigator.pushNamed(context, '/new_note');
