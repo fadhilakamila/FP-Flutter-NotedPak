@@ -211,8 +211,9 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
           await notesProvider.deleteNote(noteIdToDelete);
           print("Note deleted from Firebase!");
 
-          Navigator.of(context).pop();
-          Navigator.of(context).pop();
+          // Setelah delete, pop dua kali agar langsung kembali ke home/list
+          if (Navigator.canPop(context)) Navigator.of(context).pop(); // Tutup dialog
+          if (Navigator.canPop(context)) Navigator.of(context).pop(); // Tutup halaman edit/new
         } else {
           print("Cannot delete: Note has no ID.");
         }
