@@ -8,14 +8,32 @@ class NotesProvider with ChangeNotifier {
   final String _collectionName = 'notes';
 
   List<Note> _allNotes = [];
+  late final Stream<QuerySnapshot<Map<String, dynamic>>> _notesStream;
   String _searchTerm = '';
   OrderOption _orderBy = OrderOption.dateModified;
   bool _isDescending = true;
   bool _isGrid = true;
 
   NotesProvider() {
-    print('NotesProvider initialized. Attempting to fetch notes on startup...');
-    fetchNotes();
+    _notesStream = _firestore.collection(_collectionName).snapshots();
+    _notesStream.listen((snapshot) {
+      _allNotes = snapshot.docs.map((doc) {
+        try {
+          return Note.fromFirestore(doc);
+        } catch (e) {
+          return Note(
+            id: doc.id,
+            title: 'Error Parsing Note',
+            content: 'Failed to load content for this note due to a data error.',
+            dateModified: DateTime.now(),
+            dateCreated: DateTime.now(),
+            tags: ['parsing-error'],
+          );
+        }
+      }).toList();
+      _sortNotes();
+      notifyListeners();
+    });
   }
 
   // Metode untuk mengambil semua catatan dari Firestore
@@ -96,13 +114,13 @@ class NotesProvider with ChangeNotifier {
 
   Future<void> addNote(Note note) async {
     try {
-      DocumentReference docRef = await _firestore.collection(_collectionName).add(note.toFirestore());
-      note.id = docRef.id;
+    DocumentReference docRef = await _firestore.collection(_collectionName).add(note.toFirestore());
+    note.id = docRef.id;
 
-      _allNotes.add(note);
-      _sortNotes();
-      notifyListeners();
-      print('>>> addNote: Note added to Firestore and local list. ID: ${note.id}');
+    _allNotes.add(note);
+    _sortNotes();
+    notifyListeners();
+    print('>>> addNote: Note added to Firestore and local list. ID: ${note.id}');
     } catch (e) {
       print('!!! addNote: Error adding note: $e');
     }
@@ -115,6 +133,7 @@ class NotesProvider with ChangeNotifier {
         return;
       }
       await _firestore.collection(_collectionName).doc(updatedNote.id).update(updatedNote.toFirestore());
+      
       
       int index = _allNotes.indexWhere((n) => n.id == updatedNote.id);
       if (index != -1) {
@@ -130,12 +149,11 @@ class NotesProvider with ChangeNotifier {
 
   Future<void> deleteNote(String noteId) async {
     try {
-      await _firestore.collection(_collectionName).doc(noteId).delete();
-      
-      _allNotes.removeWhere((note) => note.id == noteId);
-      _sortNotes();
-      notifyListeners();
-      print('>>> deleteNote: Note deleted from Firestore and local list. ID: $noteId');
+    await _firestore.collection(_collectionName).doc(noteId).delete();
+    _allNotes.removeWhere((note) => note.id == noteId);
+    _sortNotes();
+    notifyListeners();
+    print('>>> deleteNote: Note deleted from Firestore and local list. ID: $noteId');
     } catch (e) {
       print('!!! deleteNote: Error deleting note: $e');
     }
