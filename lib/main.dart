@@ -50,7 +50,7 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(primarySwatch: Colors.blue, fontFamily: 'Inter'),
         debugShowCheckedModeBanner: false,
 
-        initialRoute: '/register',
+        initialRoute: '/login',
 
         routes: {
           '/register': (context) => const RegistrationPage(),

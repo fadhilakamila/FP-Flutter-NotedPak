@@ -11,6 +11,9 @@ import '../widgets/note_grid.dart';
 import '../widgets/note_list.dart';
 import '../widgets/note_fab.dart';
 
+import 'package:noted_pak/services/auth_service.dart';
+import 'package:noted_pak/widgets/confirmation_dialog.dart';
+
 import '../models/note.dart';
 import '../change_notifiers/notes_provider.dart';
 
@@ -120,16 +123,40 @@ class NotedPakHomePage extends StatelessWidget {
               ),
             ),
             actions: [
+              // Widget profil yang lama telah diganti dengan tombol logout
               Padding(
-                padding: const EdgeInsets.only(right: 20.0),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE0E0E0),
-                    shape: BoxShape.circle,
+                padding: const EdgeInsets.only(right: 12.0),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.logout,
+                    color: Color(0xFF5B9BD5),
+                    size: 28,
                   ),
-                  child: Icon(Icons.person, color: Colors.grey[600], size: 24),
+                  tooltip: 'Logout',
+                  onPressed: () async {
+                    // Menampilkan dialog konfirmasi sebelum logout
+                    final bool? confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return const ConfirmationDialog(
+                          title: 'Confirm Logout',
+                          content: 'Are you sure you want to log out?',
+                          confirmButtonText: 'Logout',
+                          confirmButtonColor: Colors.red,
+                        );
+                      },
+                    );
+
+                    // Jika pengguna mengonfirmasi, lakukan proses logout
+                    if (confirmed == true) {
+                      await AuthService().signOut();
+                      if (context.mounted) {
+                        // Kembali ke halaman login dan hapus semua rute sebelumnya
+                        Navigator.pushNamedAndRemoveUntil(
+                            context, '/login', (Route<dynamic> route) => false);
+                      }
+                    }
+                  },
                 ),
               ),
             ],
