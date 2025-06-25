@@ -251,7 +251,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                 title: const Text('Pick from Gallery'),
                 onTap: () async {
                   Navigator.pop(bc); // Tutup bottom sheet
-                  await _pickFromGalleryAndRecognizeText();
+                  await pickImageFromGallery(); // Ganti ke fungsi debug wiring
                 },
               ),
             ],
@@ -473,6 +473,47 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
   return null; // Default return null jika izin tidak diberikan atau ada masalah awal
 }
 
+  Future<void> pickImageFromGallery() async {
+    print('pickImageFromGallery dipanggil');
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    print('Image: $image');
+    if (image == null) return;
+
+    setState(() { _isOcrProcessing = true; });
+    try {
+      final TextRecognizer textRecognizer = TextRecognizer();
+      final InputImage inputImage = InputImage.fromFilePath(image.path);
+      final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
+      textRecognizer.close();
+      if (recognizedText.text.isNotEmpty) {
+        setState(() {
+          _contentController.text = recognizedText.text;
+          _dateModified = DateTime.now();
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Text extracted successfully!')),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No text found in the selected image.')),
+          );
+        }
+      }
+    } catch (e) {
+      print('Error during OCR: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to process image for text: $e')),
+        );
+      }
+    } finally {
+      setState(() { _isOcrProcessing = false; });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
