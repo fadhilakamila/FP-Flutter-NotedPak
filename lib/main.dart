@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:noted_pak/firebase_options.dart';
+import 'package:noted_pak/firebase_options.dart';import 'package:firebase_auth/firebase_auth.dart';
 import 'package:camera/camera.dart';
 
 import 'package:noted_pak/pages/main_page.dart';
