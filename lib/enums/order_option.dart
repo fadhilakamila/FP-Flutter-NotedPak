@@ -1,12 +1,11 @@
 enum OrderOption {
   dateModified,
-  dateCreated, title;
+  dateCreated;
 
   String get name {
     return switch (this) {
       OrderOption.dateModified => 'Modified Date',
       OrderOption.dateCreated => 'Created Date',
-      OrderOption.title => throw UnimplementedError(),
     };
   }
 }

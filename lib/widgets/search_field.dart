@@ -23,7 +23,7 @@ class _SearchFieldState extends State<SearchField> {
         .read<NotesProvider>(); // Menggunakan context.read<NotesProvider>()
     searchController = TextEditingController()
       ..addListener(() {
-        notesProvider.updateSearchTerm(searchController.text);
+        notesProvider.searchTerm = searchController.text;
       });
   }
 
