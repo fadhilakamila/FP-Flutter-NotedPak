@@ -2,10 +2,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:noted_pak/pages/camera_screen.dart';
+import 'package:image_picker/image_picker.dart'; // Tambahkan import ini
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart'; // Tambahkan import ini
+import 'package:permission_handler/permission_handler.dart'; // Tambahkan import ini
+import 'package:noted_pak/pages/camera_screen.dart'; // Tambahkan import ini
 
 import 'package:noted_pak/widgets/new_tag_dialog.dart';
 import 'package:noted_pak/widgets/note_tag.dart';
@@ -40,27 +40,17 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
   DateTime? _dateModified;
 
   late bool _isEditingMode;
-  bool _isOcrProcessing = false;
+  bool _isOcrProcessing = false; // Tambahkan state untuk loading OCR
 
-  // Variabel untuk melacak gaya teks yang SEDANG AKTIF PADA SELURUH TEXTFIELD
-  bool _isBold = false; // Dikembalikan ke gaya untuk seluruh TextField
-  bool _isItalic = false; // Dikembalikan ke gaya untuk seluruh TextField
-  bool _isUnderline = false; // Dikembalikan ke gaya untuk seluruh TextField
-  bool _isStrikethrough = false; // Dikembalikan ke gaya untuk seluruh TextField
+  bool _isBold = false;
+  bool _isItalic = false;
+  bool _isUnderline = false;
+  bool _isStrikethrough = false;
 
   final List<String> _allExistingUserTags = [
-    'Personal Routine',
-    'Life',
-    'College',
-    'Work',
-    'Health',
-    'Finance',
-    'Travel',
-    'Ideas',
-    'Shopping',
-    'Goals',
-    'Hobby',
-    'Daily',
+    'Personal Routine', 'Life', 'College', 'Work', 'Health',
+    'Finance', 'Travel', 'Ideas', 'Shopping', 'Goals',
+    'Hobby', 'Daily',
   ];
 
   @override
@@ -77,9 +67,6 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
     } else {
       _isEditingMode = false;
     }
-
-    // Hapus listener ini karena tidak lagi digunakan dengan rich text ad-hoc
-    // _contentController.addListener(_updateToolbarState);
   }
 
   void _initializeControllers() {
@@ -110,6 +97,10 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
   void _setInitialContent() {
     if (widget.initialContent != null && widget.initialContent!.isNotEmpty) {
       _contentController.text = widget.initialContent!;
+      // Judul TETAP KOSONG, biarkan user mengisi sendiri
+      // if (_titleController.text.isEmpty) {
+      //   _titleController.text = 'New Scanned Note';
+      // }
     }
   }
 
@@ -128,20 +119,11 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
     return "${date.day} ${_getMonthName(date.month)} ${date.year}, ${date.hour.toString().padLeft(2, '0')}.${date.minute.toString().padLeft(2, '0')} ${date.hour >= 12 ? 'PM' : 'AM'}";
   }
 
+  // Pastikan fungsi _getMonthName ada di sini, di dalam _NewOrEditNotePageState
   String _getMonthName(int month) {
     const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
     ];
     return months[month - 1];
   }
@@ -193,12 +175,8 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
       final notesProvider = Provider.of<NotesProvider>(context, listen: false);
 
       Note newOrUpdatedNote = Note(
-        id: widget.existingNote != null
-            ? widget.existingNote!['id'] as String?
-            : null,
-        title: _titleController.text.isEmpty
-            ? 'Untitled Note'
-            : _titleController.text,
+        id: widget.existingNote != null ? widget.existingNote!['id'] as String? : null,
+        title: _titleController.text.isEmpty ? 'Untitled Note' : _titleController.text,
         content: _contentController.text,
         tags: _tags,
         dateCreated: _dateCreated ?? DateTime.now(),
@@ -234,18 +212,16 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
         if (!mounted) return;
 
         if (widget.existingNote != null && widget.existingNote!['id'] != null) {
-          final notesProvider = Provider.of<NotesProvider>(
-            context,
-            listen: false,
-          );
+          final notesProvider = Provider.of<NotesProvider>(context, listen: false);
           String noteIdToDelete = widget.existingNote!['id'];
 
           await notesProvider.deleteNote(noteIdToDelete);
           print("Note deleted from Firebase!");
 
-          Navigator.of(context).pop();
+          // Pop dialog, lalu pop halaman edit
+          Navigator.of(context).pop(); // Tutup dialog
           if (Navigator.of(context).canPop()) {
-            Navigator.of(context).pop();
+            Navigator.of(context).pop(); // Tutup halaman edit
           }
         } else {
           print("Cannot delete: Note has no ID.");
@@ -254,6 +230,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
     });
   }
 
+  // Fungsi untuk menampilkan opsi OCR (Camera / Gallery) di dalam Edit Page
   void _showOcrOptions() {
     showModalBottomSheet(
       context: context,
@@ -265,7 +242,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                 leading: const Icon(Icons.camera_alt),
                 title: const Text('Scan using Camera'),
                 onTap: () async {
-                  Navigator.pop(bc);
+                  Navigator.pop(bc); // Tutup bottom sheet
                   await _scanUsingCamera();
                 },
               ),
@@ -273,8 +250,8 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                 leading: const Icon(Icons.image),
                 title: const Text('Pick from Gallery'),
                 onTap: () async {
-                  Navigator.pop(bc);
-                  await _pickFromGalleryAndRecognizeText();
+                  Navigator.pop(bc); // Tutup bottom sheet
+                  await pickImageFromGallery(); // Ganti ke fungsi debug wiring
                 },
               ),
             ],
@@ -284,13 +261,13 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
     );
   }
 
+  // Fungsi untuk memindai menggunakan kamera
   Future<void> _scanUsingCamera() async {
     if (_isOcrProcessing) return;
 
-    setState(() {
-      _isOcrProcessing = true;
-    });
+    setState(() { _isOcrProcessing = true; }); // Show loading
 
+    // Request camera permission
     var status = await Permission.camera.request();
     if (status.isDenied) {
       if (mounted) {
@@ -298,28 +275,19 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
           const SnackBar(content: Text('Camera permission denied.')),
         );
       }
-      setState(() {
-        _isOcrProcessing = false;
-      });
+      setState(() { _isOcrProcessing = false; });
       return;
     }
     if (status.isPermanentlyDenied) {
-      if (mounted) {
+       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              'Camera permission permanently denied. Please enable from app settings.',
-            ),
-            action: SnackBarAction(
-              label: 'Settings',
-              onPressed: openAppSettings,
-            ),
+            content: Text('Camera permission permanently denied. Please enable from app settings.'),
+            action: SnackBarAction(label: 'Settings', onPressed: openAppSettings),
           ),
         );
       }
-      setState(() {
-        _isOcrProcessing = false;
-      });
+      setState(() { _isOcrProcessing = false; });
       return;
     }
 
@@ -332,11 +300,8 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
       if (!mounted) return;
 
       if (extractedText != null && extractedText.isNotEmpty) {
-        // --- Penting: Sisipkan teks ke TextField di posisi kursor ---
-        _insertTextAtSelection(_contentController, extractedText);
-        // ---
-
         setState(() {
+          _contentController.text = extractedText;
           _dateModified = DateTime.now();
         });
         ScaffoldMessenger.of(context).showSnackBar(
@@ -355,257 +320,200 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
         );
       }
     } finally {
-      setState(() {
-        _isOcrProcessing = false;
-      });
+      setState(() { _isOcrProcessing = false; }); // Hide loading
     }
   }
 
-  Future<void> _pickFromGalleryAndRecognizeText() async {
-    print('DEBUG OCR: _pickFromGalleryAndRecognizeText called.');
-    if (_isOcrProcessing) {
-      print('DEBUG OCR: Already processing. Exiting.');
-      return;
+  // Fungsi untuk memilih dari galeri dan mengenali teks
+  Future<String?> _pickFromGalleryAndRecognizeText() async {
+  print('DEBUG OCR: _pickFromGalleryAndRecognizeText called.');
+  if (_isOcrProcessing) {
+    print('DEBUG OCR: Already processing. Exiting.');
+    return null;
+  }
+
+  setState(() { _isOcrProcessing = true; }); // Tampilkan loading indicator
+
+  // === LANGKAH 1: PERMINTAAN IZIN ===
+  PermissionStatus status;
+  print('DEBUG OCR: Requesting Permission.photos...');
+  status = await Permission.photos.request();
+  print('DEBUG OCR: Permission.photos status: $status');
+
+  if (status.isGranted) {
+    print('DEBUG OCR: Permission GRANTED.');
+    // === LANGKAH 2: PILIH GAMBAR DARI GALERI ===
+    final ImagePicker picker = ImagePicker();
+    XFile? image;
+    try {
+      print('DEBUG OCR: Calling picker.pickImage from gallery...');
+      image = await picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        print('DEBUG OCR: Image selected: ${image.path}');
+      } else {
+        print('DEBUG OCR: Image selection cancelled by user.');
+      }
+    } catch (e) {
+      print('DEBUG OCR: Error picking image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error picking image: $e')),
+        );
+      }
+      return null; // Keluar jika ada error saat memilih gambar
     }
 
-    setState(() {
-      _isOcrProcessing = true;
-    });
+    if (image != null) {
+      // === LANGKAH 3: PROSES GAMBAR DENGAN ML KIT ===
+      BuildContext? loadingDialogContext;
 
-    PermissionStatus status;
-    print('DEBUG OCR: Requesting Permission.photos...');
-    status = await Permission.photos.request();
-    print('DEBUG OCR: Permission.photos status: $status');
-
-    if (status.isGranted) {
-      print('DEBUG OCR: Permission GRANTED.');
-      final ImagePicker picker = ImagePicker();
-      XFile? image;
       try {
-        print('DEBUG OCR: Calling picker.pickImage from gallery...');
-        image = await picker.pickImage(source: ImageSource.gallery);
-        if (image != null) {
-          print('DEBUG OCR: Image selected: ${image.path}');
+        print('DEBUG OCR: Initializing TextRecognizer...');
+        final TextRecognizer textRecognizer = TextRecognizer();
+        print('DEBUG OCR: Creating InputImage from file...');
+        final InputImage inputImage = InputImage.fromFilePath(image.path);
+
+        // Tampilkan dialog loading saat memproses
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext ctx) { 
+            loadingDialogContext = ctx; // Simpan context dialog untuk ditutup nanti
+            return const AlertDialog(
+              content: Row(
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(width: 20),
+                  Text("Processing image..."),
+                ],
+              ),
+            );
+          },
+        );
+
+        print('DEBUG OCR: Calling textRecognizer.processImage...');
+        final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
+        print('DEBUG OCR: Text recognition completed.');
+
+        // Pastikan dialog tertutup HANYA jika memang terbuka dan mounted
+        if (loadingDialogContext != null && loadingDialogContext!.mounted && Navigator.of(loadingDialogContext!).canPop()) {
+          Navigator.of(loadingDialogContext!).pop(); // <--- GUNAKAN context yang disimpan
+        }
+        textRecognizer.close(); // Penting: selalu tutup recognizer setelah selesai
+
+        if (recognizedText.text.isNotEmpty) {
+          print('DEBUG OCR: Text extracted. Length: ${recognizedText.text.length}');
+          if (mounted) { // Pastikan mounted sebelum setState dan SnackBar
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Text extracted successfully!')),
+            );
+          }
+          return recognizedText.text; // Kembalikan teks yang diekstrak
         } else {
-          print('DEBUG OCR: Image selection cancelled by user.');
+          print('DEBUG OCR: No text found in the selected image.');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('No text found in the selected image.')),
+            );
+          }
+          return ''; // Kembalikan string kosong jika tidak ada teks
         }
       } catch (e) {
-        print('DEBUG OCR: Error picking image: $e');
+        print('DEBUG OCR: Error during ML Kit processing: $e');
         if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
-        }
-        setState(() {
-          _isOcrProcessing = false;
-        });
-        return;
-      }
-
-      if (image != null) {
-        BuildContext? loadingDialogContext;
-
-        try {
-          print('DEBUG OCR: Initializing TextRecognizer...');
-          final TextRecognizer textRecognizer = TextRecognizer();
-          print('DEBUG OCR: Creating InputImage from file...');
-          final InputImage inputImage = InputImage.fromFilePath(image.path);
-
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (BuildContext ctx) {
-              loadingDialogContext = ctx;
-              return const AlertDialog(
-                content: Row(
-                  children: [
-                    CircularProgressIndicator(),
-                    SizedBox(width: 20),
-                    Text("Processing image..."),
-                  ],
-                ),
-              );
-            },
+          // Pastikan dialog loading ditutup jika ada error saat ML Kit
+          if (Navigator.of(context).canPop()) { // Cek apakah ada dialog yang bisa dipop
+             Navigator.of(context).pop();
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to process image for text: $e')),
           );
-
-          print('DEBUG OCR: Calling textRecognizer.processImage...');
-          final RecognizedText recognizedText = await textRecognizer
-              .processImage(inputImage);
-          print('DEBUG OCR: Text recognition completed.');
-
-          if (loadingDialogContext != null &&
-              loadingDialogContext!.mounted &&
-              Navigator.of(loadingDialogContext!).canPop()) {
-            Navigator.of(loadingDialogContext!).pop();
-          }
-          textRecognizer.close();
-
-          if (recognizedText.text.isNotEmpty) {
-            print(
-              'DEBUG OCR: Text extracted. Length: ${recognizedText.text.length}',
-            );
-            if (mounted) {
-              _insertTextAtSelection(_contentController, recognizedText.text);
-
-              setState(() {
-                _dateModified = DateTime.now();
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Text extracted successfully!')),
-              );
-            }
-          } else {
-            print('DEBUG OCR: No text found in the selected image.');
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('No text found in the selected image.'),
-                ),
-              );
-            }
-          }
-        } catch (e) {
-          print('DEBUG OCR: Error during ML Kit processing: $e');
-          if (mounted) {
-            if (loadingDialogContext != null &&
-                loadingDialogContext!.mounted &&
-                Navigator.of(loadingDialogContext!).canPop()) {
-              Navigator.of(loadingDialogContext!).pop();
-            } else if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-            }
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Failed to process image for text: $e')),
-            );
-          }
-        } finally {
-          setState(() {
-            _isOcrProcessing = false;
-          });
         }
-      } else {
-        print('DEBUG OCR: No image selected by user.');
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('No image selected.')));
-        }
-        setState(() {
-          _isOcrProcessing = false;
-        });
+        return null; // Kembalikan null jika ada error
+      } finally {
+        // Blok finally ini akan dijalankan terlepas dari ada/tidaknya error di try/catch di atasnya
+        // Pastikan _isOcrProcessing di-reset di sini
+        setState(() { _isOcrProcessing = false; }); // Sembunyikan loading indicator utama
+        // textRecognizer.close() sudah dipanggil di dalam try/catch
       }
-    } else if (status.isDenied) {
-      print('DEBUG OCR: Permission DENIED by user. Showing SnackBar.');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Storage/Photos permission denied.')),
-        );
-      }
-      setState(() {
-        _isOcrProcessing = false;
-      });
-    } else if (status.isPermanentlyDenied) {
-      print(
-        'DEBUG OCR: Permission PERMANENTLY DENIED by user. Prompting settings.',
-      );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text(
-              'Storage/Photos permission permanently denied. Please enable from app settings.',
-            ),
-            action: SnackBarAction(
-              label: 'Settings',
-              onPressed: openAppSettings,
-            ),
-          ),
-        );
-      }
-      setState(() {
-        _isOcrProcessing = false;
-      });
     } else {
-      print('DEBUG OCR: Unknown permission status: $status');
+      print('DEBUG OCR: No image selected by user.');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Unknown permission status: $status')),
+          const SnackBar(content: Text('No image selected.')),
         );
       }
-      setState(() {
-        _isOcrProcessing = false;
-      });
+      return null; // Kembalikan null jika tidak ada gambar dipilih
+    }
+  } else if (status.isDenied) {
+    print('DEBUG OCR: Permission DENIED by user. Showing SnackBar.');
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Storage/Photos permission denied.')),
+      );
+    }
+  } else if (status.isPermanentlyDenied) {
+    print('DEBUG OCR: Permission PERMANENTLY DENIED by user. Prompting settings.');
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Storage/Photos permission permanently denied. Please enable from app settings.'),
+          action: SnackBarAction(label: 'Settings', onPressed: openAppSettings),
+        ),
+      );
+    }
+  } else {
+    print('DEBUG OCR: Unknown permission status: $status');
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Unknown permission status: $status')),
+      );
     }
   }
+  return null; // Default return null jika izin tidak diberikan atau ada masalah awal
+}
 
-  // ========================================================================
-  // BAGIAN YANG DIKEMBALIKAN/DIUBAH UNTUK TEXT FORMATTING
-  // ========================================================================
+  Future<void> pickImageFromGallery() async {
+    print('pickImageFromGallery dipanggil');
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    print('Image: $image');
+    if (image == null) return;
 
-  // Fungsi ini dikembalikan untuk mendapatkan TextStyle yang diterapkan ke SELURUH TextField
-  TextStyle _getCurrentTextStyle() {
-    return TextStyle(
-      fontSize: 16,
-      fontWeight: _isBold ? FontWeight.bold : FontWeight.normal,
-      fontStyle: _isItalic ? FontStyle.italic : FontStyle.normal,
-      decoration: TextDecoration.combine([
-        if (_isUnderline) TextDecoration.underline,
-        if (_isStrikethrough) TextDecoration.lineThrough,
-      ]),
-    );
+    setState(() { _isOcrProcessing = true; });
+    try {
+      final TextRecognizer textRecognizer = TextRecognizer();
+      final InputImage inputImage = InputImage.fromFilePath(image.path);
+      final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
+      textRecognizer.close();
+      if (recognizedText.text.isNotEmpty) {
+        setState(() {
+          _contentController.text = recognizedText.text;
+          _dateModified = DateTime.now();
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Text extracted successfully!')),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No text found in the selected image.')),
+          );
+        }
+      }
+    } catch (e) {
+      print('Error during OCR: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to process image for text: $e')),
+        );
+      }
+    } finally {
+      setState(() { _isOcrProcessing = false; });
+    }
   }
-
-  // Fungsi _updateToolbarState tidak lagi diperlukan untuk fungsionalitas ini, bisa dihapus atau dikosongkan.
-  // Untuk rich text sejati, fungsi ini akan membaca gaya di posisi kursor.
-  void _updateToolbarState() {
-    // Fungsi ini tidak melakukan apa-apa yang fungsional untuk styling seluruh TextField.
-    // Dulu mencoba mencerminkan gaya seleksi, tapi itu tidak didukung oleh TextField standar.
-    // Jika tidak digunakan, bisa dihapus atau biarkan kosong.
-  }
-
-  // Fungsi untuk menerapkan gaya ke SELURUH TEXTFIELD
-  void _applyStyle(
-    FontWeight? fontWeight,
-    FontStyle? fontStyle,
-    TextDecoration? decoration,
-  ) {
-    setState(() {
-      if (fontWeight != null) _isBold = !_isBold;
-      if (fontStyle != null) _isItalic = !_isItalic;
-      if (decoration == TextDecoration.underline) _isUnderline = !_isUnderline;
-      if (decoration == TextDecoration.lineThrough)
-        _isStrikethrough = !_isStrikethrough;
-      _dateModified =
-          DateTime.now(); // Update tanggal modifikasi saat gaya diubah
-    });
-    // Tidak perlu memanipulasi _contentController secara manual di sini
-    // karena TextField akan di-rebuild dengan gaya baru secara otomatis.
-  }
-
-  // Fungsi helper untuk menyisipkan teks
-  void _insertTextAtSelection(
-    TextEditingController controller,
-    String textToInsert,
-  ) {
-    final text = controller.text;
-    final selection = controller.selection;
-
-    final newText = text.replaceRange(
-      selection.start,
-      selection.end,
-      textToInsert,
-    );
-
-    controller.value = TextEditingValue(
-      text: newText,
-      selection: TextSelection.collapsed(
-        offset: selection.start + textToInsert.length,
-      ),
-    );
-  }
-
-  // ========================================================================
-  // AKHIR BAGIAN YANG DIKEMBALIKAN/DIUBAH
-  // ========================================================================
 
   @override
   Widget build(BuildContext context) {
@@ -622,7 +530,9 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          isNewNote ? 'New Note' : (_isEditingMode ? 'Edit Note' : 'View Note'),
+          isNewNote
+              ? 'New Note'
+              : (_isEditingMode ? 'Edit Note' : 'View Note'),
           style: const TextStyle(
             color: _primaryBlue,
             fontSize: 18,
@@ -631,18 +541,15 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
         ),
         actions: [
           // Tombol OCR Scanner
-          if (_isEditingMode && !widget.isReadOnly)
+          if (_isEditingMode && !widget.isReadOnly) // Hanya muncul saat mode edit
             _isOcrProcessing
                 ? const Padding(
                     padding: EdgeInsets.all(8.0),
                     child: CircularProgressIndicator(color: _primaryBlue),
                   )
                 : IconButton(
-                    icon: const Icon(
-                      Icons.document_scanner,
-                      color: _primaryBlue,
-                    ),
-                    onPressed: _showOcrOptions,
+                    icon: const Icon(Icons.document_scanner, color: _primaryBlue),
+                    onPressed: _showOcrOptions, // Memanggil opsi OCR
                   ),
 
           // Tombol Done/Edit
@@ -685,28 +592,25 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                   _showDeleteConfirmationDialog();
                 }
               },
-              itemBuilder: (BuildContext context) =>
-                  const <PopupMenuEntry<String>>[
-                    PopupMenuItem<String>(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete_outline, color: Colors.red),
-                          SizedBox(width: 8),
-                          Text(
-                            'Delete Note',
-                            style: TextStyle(color: Colors.red),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+              itemBuilder: (BuildContext context) => const <PopupMenuEntry<String>>[
+                PopupMenuItem<String>(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline, color: Colors.red),
+                      SizedBox(width: 8),
+                      Text('Delete Note', style: TextStyle(color: Colors.red)),
+                    ],
+                  ),
+                ),
+              ],
               icon: const Icon(Icons.more_vert, color: _primaryBlue),
             ),
         ],
       ),
       body: Column(
         children: [
+          // ... (Sisa Body tetap sama) ...
           // Title Section
           Container(
             color: Colors.white,
@@ -817,19 +721,20 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                         .map(
                           (tag) => DotTag(
                             tag: tag,
-                            child: (_isEditingMode && !widget.isReadOnly)
-                                ? GestureDetector(
-                                    onTap: () => _removeTag(tag),
-                                    child: Container(
-                                      padding: const EdgeInsets.only(left: 6),
-                                      child: const Icon(
-                                        Icons.close,
-                                        size: 14,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  )
-                                : null,
+                            child:
+                                (_isEditingMode && !widget.isReadOnly)
+                                    ? GestureDetector(
+                                        onTap: () => _removeTag(tag),
+                                        child: Container(
+                                          padding: const EdgeInsets.only(left: 6),
+                                          child: const Icon(
+                                            Icons.close,
+                                            size: 14,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      )
+                                    : null,
                           ),
                         )
                         .toList(),
@@ -855,9 +760,15 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                         maxLines: null,
                         expands: true,
                         textAlignVertical: TextAlignVertical.top,
-                        // UBAH KEMBALI STYLE KE SINI
-                        style:
-                            _getCurrentTextStyle(), // Menggunakan gaya untuk seluruh TextField
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: _isBold ? FontWeight.bold : FontWeight.normal,
+                          fontStyle: _isItalic ? FontStyle.italic : FontStyle.normal,
+                          decoration: TextDecoration.combine([
+                            if (_isUnderline) TextDecoration.underline,
+                            if (_isStrikethrough) TextDecoration.lineThrough,
+                          ]),
+                        ),
                         decoration: InputDecoration(
                           hintText: 'The..',
                           hintStyle: TextStyle(
@@ -866,19 +777,6 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                           ),
                           border: InputBorder.none,
                         ),
-                        // HAPUS PROPERTI buildCounter INI
-                        // buildCounter: (context, {required currentLength, required isFocused, maxLength}) {
-                        //   return Text.rich(
-                        //     TextSpan(
-                        //       children: [
-                        //         TextSpan(
-                        //           text: _contentController.text,
-                        //           style: _getCurrentTextStyle(),
-                        //         ),
-                        //       ],
-                        //     ),
-                        //   );
-                        // },
                         onChanged: (value) {
                           if (_isEditingMode) {
                             setState(() {
@@ -904,51 +802,63 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
                         ),
                       ),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           IconButton(
+                            icon: const Icon(Icons.undo),
+                            color: Colors.grey[600],
+                            onPressed: () { /* Implement undo functionality */ },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.redo),
+                            color: Colors.grey[600],
+                            onPressed: () { /* Implement redo functionality */ },
+                          ),
+
+                          const SizedBox(width: 8),
+
+                          IconButton(
                             icon: const Icon(Icons.format_bold),
-                            color: _isBold
-                                ? _primaryBlue
-                                : Colors
-                                      .grey[600], // Menggunakan _isBold global
+                            color: _isBold ? _primaryBlue : Colors.grey[600],
                             onPressed: () {
-                              _applyStyle(FontWeight.bold, null, null);
+                              setState(() {
+                                _isBold = !_isBold;
+                              });
                             },
                           ),
                           IconButton(
                             icon: const Icon(Icons.format_italic),
-                            color: _isItalic
-                                ? _primaryBlue
-                                : Colors
-                                      .grey[600], // Menggunakan _isItalic global
+                            color: _isItalic ? _primaryBlue : Colors.grey[600],
                             onPressed: () {
-                              _applyStyle(null, FontStyle.italic, null);
+                              setState(() {
+                                _isItalic = !_isItalic;
+                              });
                             },
                           ),
                           IconButton(
                             icon: const Icon(Icons.format_underlined),
-                            color: _isUnderline
-                                ? _primaryBlue
-                                : Colors
-                                      .grey[600], // Menggunakan _isUnderline global
+                            color: _isUnderline ? _primaryBlue : Colors.grey[600],
                             onPressed: () {
-                              _applyStyle(null, null, TextDecoration.underline);
+                              setState(() {
+                                _isUnderline = !_isUnderline;
+                              });
                             },
                           ),
                           IconButton(
                             icon: const Icon(Icons.format_strikethrough),
-                            color: _isStrikethrough
-                                ? _primaryBlue
-                                : Colors
-                                      .grey[600], // Menggunakan _isStrikethrough global
+                            color: _isStrikethrough ? _primaryBlue : Colors.grey[600],
                             onPressed: () {
-                              _applyStyle(
-                                null,
-                                null,
-                                TextDecoration.lineThrough,
-                              );
+                              setState(() {
+                                _isStrikethrough = !_isStrikethrough;
+                              });
                             },
+                          ),
+
+                          const Spacer(),
+
+                          IconButton(
+                            icon: const Icon(Icons.format_list_bulleted),
+                            color: Colors.grey[600],
+                            onPressed: () { /* Implement bullet list functionality */ },
                           ),
                         ],
                       ),
@@ -965,8 +875,6 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
   @override
   void dispose() {
     _titleController.dispose();
-    // Hapus listener ini jika tidak digunakan lagi
-    // _contentController.removeListener(_updateToolbarState);
     _contentController.dispose();
     super.dispose();
   }
