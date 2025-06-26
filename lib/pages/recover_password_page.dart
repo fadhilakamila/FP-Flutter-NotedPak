@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:noted_pak/widgets/message_dialog.dart'; // <--- TAMBAHKAN IMPORT INI
 
@@ -117,9 +118,21 @@ class _RecoverPasswordPageState extends State<RecoverPasswordPage> {
       width: double.infinity,
       height: 52,
       child: ElevatedButton(
-        onPressed: () {
+        onPressed: () async {
           if (_formKey.currentState?.validate() ?? false) {
-            _showSuccessDialog();
+            try {
+              await FirebaseAuth.instance.sendPasswordResetEmail(
+                email: _emailController.text.trim(),
+              );
+              _showSuccessDialog();
+            } on FirebaseAuthException catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(e.message ?? 'Failed to send reset email'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
           }
         },
         style: ElevatedButton.styleFrom(
