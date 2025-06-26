@@ -1,178 +1,165 @@
+import 'dart:async'; // WAJIB: Diperlukan untuk StreamSubscription
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/note.dart';
 import '../enums/order_option.dart';
 
 class NotesProvider with ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   final String _collectionName = 'notes';
 
   List<Note> _allNotes = [];
-  late final Stream<QuerySnapshot<Map<String, dynamic>>> _notesStream;
+  StreamSubscription<QuerySnapshot>? _notesSubscription; // Listener untuk Firestore
+
   String _searchTerm = '';
   OrderOption _orderBy = OrderOption.dateModified;
   bool _isDescending = true;
   bool _isGrid = true;
 
   NotesProvider() {
-    _notesStream = _firestore.collection(_collectionName).snapshots();
-    _notesStream.listen((snapshot) {
-      _allNotes = snapshot.docs.map((doc) {
-        try {
-          return Note.fromFirestore(doc);
-        } catch (e) {
-          return Note(
-            id: doc.id,
-            title: 'Error Parsing Note',
-            content: 'Failed to load content for this note due to a data error.',
-            dateModified: DateTime.now(),
-            dateCreated: DateTime.now(),
-            tags: ['parsing-error'],
-          );
-        }
-      }).toList();
-      _sortNotes();
-      notifyListeners();
+    // Memantau perubahan status login user
+    _auth.authStateChanges().listen((user) {
+      if (user != null) {
+        // Jika user login, mulai mendengarkan perubahan di database
+        _listenToNotes(user.uid);
+      } else {
+        // Jika user logout, hentikan listener dan bersihkan data
+        _cancelSubscription();
+        _allNotes = [];
+        notifyListeners();
+      }
     });
   }
 
-  // Metode untuk mengambil semua catatan dari Firestore
-  Future<void> fetchNotes() async {
-    try {
-      print('>>> fetchNotes: Starting to fetch documents from collection "$_collectionName"...');
-      QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore.collection(_collectionName).get();
-      print('<<< fetchNotes: Successfully fetched ${snapshot.docs.length} documents.');
-
-      _allNotes = snapshot.docs.map((doc) {
-        try {
-          final note = Note.fromFirestore(doc);
-          print('      - Parsed document ID: ${doc.id} -> Title: ${note.title}');
-          return note;
-        } catch (e) {
-          print('!!! fetchNotes: Error parsing document with ID: ${doc.id}. Error: $e');
-          // Jika ada error parsing, buat catatan dummy agar tidak crash seluruh aplikasi.
-          // Ini membantu melacak dokumen mana yang bermasalah.
-          return Note(
-            id: doc.id,
-            title: 'Error Parsing Note',
-            content: 'Failed to load content for this note due to a data error.',
-            dateModified: DateTime.now(),
-            dateCreated: DateTime.now(),
-            // Menghapus type: NoteType.daily,
-            tags: ['parsing-error'],
-          );
-        }
-      }).toList();
-
-      print('>>> fetchNotes: All documents processed. Total notes in _allNotes: ${_allNotes.length}');
-      _sortNotes();
-      notifyListeners();
-      print('<<< fetchNotes: notifyListeners() called. UI should update.');
-    } catch (e) {
-      print('!!! fetchNotes: Main error during fetching process: $e');
-      // Tampilkan SnackBar atau pesan error di UI jika Anda mau
-    }
-  }
+  // --- GETTER UNTUK UI ---
+  bool get isGrid => _isGrid;
+  OrderOption get orderBy => _orderBy;
+  bool get isDescending => _isDescending;
 
   List<Note> get notes {
     List<Note> filteredNotes = _allNotes.where((note) {
-      final query = _searchTerm.toLowerCase();
-      return query.isEmpty ||
-          note.title.toLowerCase().contains(query) ||
-          note.content.toLowerCase().contains(query);
+      final titleMatch = note.title.toLowerCase().contains(_searchTerm.toLowerCase());
+      final contentMatch = note.content.toLowerCase().contains(_searchTerm.toLowerCase());
+      final tagMatch = note.tags.any((tag) => tag.toLowerCase().contains(_searchTerm.toLowerCase()));
+      return titleMatch || contentMatch || tagMatch;
     }).toList();
-
-    _sortNotes(filteredNotes);
+    
+    // Pengurutan dilakukan di sini agar selalu ter-update saat UI me-render
+    _sortList(filteredNotes);
     return filteredNotes;
   }
 
-  String get searchTerm => _searchTerm;
-  set searchTerm(String value) {
-    _searchTerm = value;
-    notifyListeners();
-  }
+  // --- LISTENER REAL-TIME ---
+  void _listenToNotes(String userId) {
+    // Batalkan listener lama jika ada untuk mencegah kebocoran memori
+    _notesSubscription?.cancel();
 
-  OrderOption get orderBy => _orderBy;
-  set orderBy(OrderOption value) {
-    _orderBy = value;
-    _sortNotes();
-    notifyListeners();
-  }
+    // Buat query ke Firestore
+    final query = _firestore
+        .collection(_collectionName)
+        .where('userId', isEqualTo: userId);
 
-  bool get isDescending => _isDescending;
-  set isDescending(bool value) {
-    _isDescending = value;
-    _sortNotes();
-    notifyListeners();
+    // Mulai mendengarkan stream dari query
+    _notesSubscription = query.snapshots().listen(
+      (snapshot) {
+        print(">>> REAL-TIME UPDATE: Menerima ${snapshot.docs.length} dokumen dari Firestore.");
+        // Ubah data dari snapshot menjadi list of Note object
+        _allNotes = snapshot.docs.map((doc) => Note.fromFirestore(doc)).toList();
+        // Beri tahu UI untuk di-render ulang dengan data baru
+        notifyListeners();
+      },
+      onError: (error) {
+        // Tangani jika ada error saat mendengarkan
+        print("!!! ERROR saat mendengarkan notes: $error");
+      },
+    );
   }
-
-  bool get isGrid => _isGrid;
-  set isGrid(bool value) {
-    _isGrid = value;
-    notifyListeners();
-  }
+  
+  // --- FUNGSI CREATE, UPDATE, DELETE YANG LEBIH SEDERHANA ---
+  // Kita tidak perlu mengubah state lokal (_allNotes) di sini.
+  // Listener _listenToNotes akan menanganinya secara otomatis.
 
   Future<void> addNote(Note note) async {
+    // Cukup tambahkan data ke Firestore. UI akan update otomatis.
     try {
-    DocumentReference docRef = await _firestore.collection(_collectionName).add(note.toFirestore());
-    note.id = docRef.id;
-
-    _allNotes.add(note);
-    _sortNotes();
-    notifyListeners();
-    print('>>> addNote: Note added to Firestore and local list. ID: ${note.id}');
+      await _firestore.collection(_collectionName).add(note.toFirestore());
     } catch (e) {
-      print('!!! addNote: Error adding note: $e');
+      print("Error adding note: $e");
     }
   }
 
-  Future<void> updateNote(Note updatedNote) async {
+  Future<void> updateNote(Note note) async {
+    // Cukup update data di Firestore. UI akan update otomatis.
+    if (note.id == null) return;
     try {
-      if (updatedNote.id == null || updatedNote.id!.isEmpty) {
-        print("!!! updateNote: Error: Cannot update note without an ID.");
-        return;
-      }
-      await _firestore.collection(_collectionName).doc(updatedNote.id).update(updatedNote.toFirestore());
-      
-      
-      int index = _allNotes.indexWhere((n) => n.id == updatedNote.id);
-      if (index != -1) {
-        _allNotes[index] = updatedNote;
-        _sortNotes();
-        notifyListeners();
-        print('>>> updateNote: Note updated in Firestore and local list. ID: ${updatedNote.id}');
-      }
+      await _firestore.collection(_collectionName).doc(note.id).update(note.toFirestore());
     } catch (e) {
-      print('!!! updateNote: Error updating note: $e');
+      print("Error updating note: $e");
     }
   }
 
-  Future<void> deleteNote(String noteId) async {
+  Future<void> deleteNote(String id) async {
+    // Cukup hapus data dari Firestore. UI akan update otomatis.
     try {
-    await _firestore.collection(_collectionName).doc(noteId).delete();
-    _allNotes.removeWhere((note) => note.id == noteId);
-    _sortNotes();
-    notifyListeners();
-    print('>>> deleteNote: Note deleted from Firestore and local list. ID: $noteId');
+      await _firestore.collection(_collectionName).doc(id).delete();
     } catch (e) {
-      print('!!! deleteNote: Error deleting note: $e');
+      print("Error deleting note: $e");
     }
   }
-
-  void _sortNotes([List<Note>? notesList]) {
-    final listToSort = notesList ?? _allNotes;
-
+  
+  // --- FUNGSI HELPER LAINNYA ---
+  
+  void _sortList(List<Note> listToSort) {
     listToSort.sort((a, b) {
-      int comparisonResult = 0;
-      if (_orderBy == OrderOption.dateModified) {
-        comparisonResult = a.dateModified.compareTo(b.dateModified);
-      } else if (_orderBy == OrderOption.dateCreated) {
-        comparisonResult = a.dateCreated.compareTo(b.dateCreated);
-      } else {
-        comparisonResult = a.title.compareTo(b.title);
+      int comparison;
+      switch (_orderBy) {
+        case OrderOption.title:
+          comparison = a.title.toLowerCase().compareTo(b.title.toLowerCase());
+          break;
+        case OrderOption.dateCreated:
+          comparison = a.dateCreated.compareTo(b.dateCreated);
+          break;
+        case OrderOption.dateModified:
+        default:
+          comparison = a.dateModified.compareTo(b.dateModified);
+          break;
       }
-
-      return _isDescending ? -comparisonResult : comparisonResult;
+      return _isDescending ? -comparison : comparison;
     });
+  }
+
+  void updateSearchTerm(String term) {
+    _searchTerm = term;
+    notifyListeners();
+  }
+
+  void updateOrder(OrderOption option) {
+    if (_orderBy == option) {
+      _isDescending = !_isDescending;
+    } else {
+      _orderBy = option;
+      _isDescending = true;
+    }
+    notifyListeners();
+  }
+
+  void toggleView() {
+    _isGrid = !_isGrid;
+    notifyListeners();
+  }
+  
+  // Method untuk membersihkan listener saat tidak dibutuhkan lagi
+  void _cancelSubscription() {
+    _notesSubscription?.cancel();
+    _notesSubscription = null;
+  }
+
+  @override
+  void dispose() {
+    // Pastikan untuk membatalkan listener saat provider tidak digunakan lagi
+    _cancelSubscription();
+    super.dispose();
   }
 }

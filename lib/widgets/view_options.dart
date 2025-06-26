@@ -74,7 +74,7 @@ class _ViewOptionsState extends State<ViewOptions> {
                     .toList(),
                 onChanged: (newValue) {
                   // Saat opsi diubah, update notesProvider.orderBy
-                  notesProvider.orderBy = newValue!;
+                  notesProvider.updateOrder(newValue!);
                 },
               ),
             ),
@@ -85,8 +85,7 @@ class _ViewOptionsState extends State<ViewOptions> {
                   : Icons.arrow_upward,
               size: 16,
               onPressed: () {
-                notesProvider.isDescending =
-                    !notesProvider.isDescending; // Toggle isDescending
+                notesProvider.updateOrder(notesProvider.orderBy);
               },
             ),
             const Spacer(),
@@ -98,7 +97,7 @@ class _ViewOptionsState extends State<ViewOptions> {
                   : Icons.list, // Ikon list
               size: 20,
               onPressed: () {
-                notesProvider.isGrid = !notesProvider.isGrid; // Toggle isGrid
+                notesProvider.toggleView();
               },
             ),
           ],

@@ -12,6 +12,7 @@ import 'package:noted_pak/widgets/note_tag.dart';
 import 'package:noted_pak/widgets/confirmation_dialog.dart';
 import 'package:noted_pak/models/note.dart';
 import 'package:noted_pak/change_notifiers/notes_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 const Color _primaryBlue = Color(0xFF4285F4);
 const Color _lightBorderColor = Color(0xFFE9ECEF);
@@ -180,9 +181,7 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
         return const ConfirmationDialog(
           title: 'Confirm Changes',
           content: 'Are you sure you want to save these changes?',
-          confirmButtonText: 'Save',
-          cancelButtonText: 'Cancel',
-          confirmButtonColor: _primaryBlue,
+          // ...
         );
       },
     );
@@ -191,18 +190,23 @@ class _NewOrEditNotePageState extends State<NewOrEditNotePage> {
       if (!mounted) return;
 
       final notesProvider = Provider.of<NotesProvider>(context, listen: false);
+      final currentUser = FirebaseAuth.instance.currentUser;
+
+      if (currentUser == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You must be logged in to save notes.')),
+        );
+        return;
+      }
 
       Note newOrUpdatedNote = Note(
-        id: widget.existingNote != null
-            ? widget.existingNote!['id'] as String?
-            : null,
-        title: _titleController.text.isEmpty
-            ? 'Untitled Note'
-            : _titleController.text,
+        id: widget.existingNote != null ? widget.existingNote!['id'] as String? : null,
+        title: _titleController.text.isEmpty ? 'Untitled Note' : _titleController.text,
         content: _contentController.text,
         tags: _tags,
         dateCreated: _dateCreated ?? DateTime.now(),
         dateModified: DateTime.now(),
+        userId: currentUser.uid, 
       );
 
       if (newOrUpdatedNote.id == null) {
