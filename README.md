@@ -74,7 +74,7 @@ This guide provides direct steps to set up and run the NotedPak application from
 6.  **Setup Android Device for Debugging:**
     * **Enable Developer Options:** Go to **Settings** > **About phone** > Tap **Build number** 7 times.
     * **Enable USB Debugging:** Go to **Settings** > **Developer options** > Enable **USB debugging**.
-    * **Connect Device:** Plug your Android phone into your computer via USB. Allow USB debugging when prompted. (Alternatively, use wireless debugging: `adb tcpip 5555` then `adb connect [YOUR_PHONE_IP_ADDRESS]:5555`).
+    * **Connect Device:** Plug your Android phone into your computer via USB. Allow USB debugging when prompted.
     * **Verify Device:** Run `flutter devices` to ensure your device is detected.
 
 7.  **Clean Project:**
