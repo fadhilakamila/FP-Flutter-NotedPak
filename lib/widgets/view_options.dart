@@ -1,4 +1,3 @@
-// lib/widgets/view_options.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -16,6 +15,12 @@ class ViewOptions extends StatefulWidget {
 class _ViewOptionsState extends State<ViewOptions> {
   @override
   Widget build(BuildContext context) {
+    // Definisikan daftar opsi secara eksplisit untuk mencegah duplikasi
+    final List<OrderOption> dropdownOptions = [
+      OrderOption.dateModified,
+      OrderOption.dateCreated,
+    ];
+
     return Consumer<NotesProvider>(
       builder: (_, notesProvider, __) => Padding(
         padding: const EdgeInsets.symmetric(
@@ -56,14 +61,13 @@ class _ViewOptionsState extends State<ViewOptions> {
                 underline: const SizedBox.shrink(), // Menghilangkan garis bawah
                 borderRadius: BorderRadius.circular(8),
                 isDense: true,
-                items: OrderOption.values
+                // PERBAIKAN ADA DI SINI: Gunakan 'displayName' dari enum
+                items: dropdownOptions
                     .map(
-                      (e) => DropdownMenuItem(
-                        value: e,
+                      (option) => DropdownMenuItem(
+                        value: option,
                         child: Text(
-                          e == OrderOption.dateModified
-                              ? 'Date modified'
-                              : 'Date created',
+                          option.displayName, // <-- Menggunakan nama tampilan yang benar
                           style: const TextStyle(
                             fontSize: 14,
                             color: Color(0xFF8A8A8A),
@@ -74,7 +78,9 @@ class _ViewOptionsState extends State<ViewOptions> {
                     .toList(),
                 onChanged: (newValue) {
                   // Saat opsi diubah, update notesProvider.orderBy
-                  notesProvider.updateOrder(newValue!);
+                  if (newValue != null) {
+                    notesProvider.updateOrder(newValue);
+                  }
                 },
               ),
             ),
@@ -92,8 +98,7 @@ class _ViewOptionsState extends State<ViewOptions> {
             // Ikon grid/list
             NoteIconButton(
               icon: notesProvider.isGrid
-                  ? Icons
-                        .grid_view // Ikon grid
+                  ? Icons.grid_view // Ikon grid
                   : Icons.list, // Ikon list
               size: 20,
               onPressed: () {

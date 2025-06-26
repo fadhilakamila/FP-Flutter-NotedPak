@@ -1,12 +1,11 @@
 enum OrderOption {
-  dateModified,
-  dateCreated, title;
+  title('Title'),
 
-  String get name {
-    return switch (this) {
-      OrderOption.dateModified => 'Modified Date',
-      OrderOption.dateCreated => 'Created Date',
-      OrderOption.title => throw UnimplementedError(),
-    };
-  }
+  dateModified('Date Modified'),
+
+  dateCreated('Date Created');
+
+  const OrderOption(this.displayName);
+
+  final String displayName;
 }
